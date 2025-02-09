@@ -41,7 +41,7 @@ Currently, two official plugins are available:
     </tr>
     <tr>
         <td> ✅ Dark Mode</td>
-        <td> Toggle between light and dark themes</td>
+        <td> Toggle between light and dark themes using Context API</td>
     </tr>
     <tr>
         <td> ✅ Persist Data</td>
