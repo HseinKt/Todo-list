@@ -23,15 +23,6 @@ Currently, two official plugins are available:
         <td> ✅ Delete Tasks</td>
         <td> User can remove a task</td>
     </tr>
-    <tr>
-        <td> ✅ Delete Tasks</td>
-        <td> User can remove a task</td>
-    </tr>
-    <tr>
-        <td> ✅ Delete Tasks</td>
-        <td> User can remove a task</td>
-    </tr>
-    <tr>
         <td> ✅ Update Tasks</td>
         <td> User can update a task</td>
     </tr>
