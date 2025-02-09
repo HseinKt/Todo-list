@@ -9,12 +9,55 @@ Currently, two official plugins are available:
 
 
 <!-- Plan the Todo list App (Tasks & Features) -->
-📝 Features to Implement:
-✅ Add Tasks (User can type a task and add it to the list)
-✅ Delete Tasks (User can remove a task)
-✅ Mark Tasks as Completed (Toggle task completion)
-✅ Dark Mode (Toggle between light and dark themes)
-✅ Persist Data (Save tasks in local storage)
-✅ API Integration (Fetch & display tasks from JSONPlaceholder)
-✅ React Router (Home & About page for practice)
-✅ Performance Optimization (useMemo, useCallback)
+##📝 Features to Implement:
+<table>
+    <tr> 
+        <th> Features </th>
+        <th> Description</th>
+    </tr>
+    <tr> 
+        <td> ✅ Add Tasks </td>
+        <td> User can type a task and add it to the list</td>
+    </tr>
+    <tr>
+        <td> ✅ Delete Tasks</td>
+        <td> User can remove a task</td>
+    </tr>
+    <tr>
+        <td> ✅ Delete Tasks</td>
+        <td> User can remove a task</td>
+    </tr>
+    <tr>
+        <td> ✅ Delete Tasks</td>
+        <td> User can remove a task</td>
+    </tr>
+    <tr>
+        <td> ✅ Update Tasks</td>
+        <td> User can update a task</td>
+    </tr>
+    <tr>
+        <td> ✅ Mark Tasks as Completed</td>
+        <td> Toggle task completion</td>
+    </tr>
+    <tr>
+        <td> ✅ Dark Mode</td>
+        <td> Toggle between light and dark themes</td>
+    </tr>
+    <tr>
+        <td> ✅ Persist Data</td>
+        <td> Save tasks in local storage</td>
+    </tr>
+    <tr>
+        <td> ✅ API Integration</td>
+        <td> Fetch & display tasks from JSONPlaceholder</td>
+    </tr>
+    <tr>
+        <td> ✅ React Router</td>
+        <td> Home & About page for practice</td>
+    </tr>
+    <tr>
+        <td> ✅ Performance Optimization</td>
+        <td> useMemo, useCallback</td>
+    </tr>
+</table>
+
