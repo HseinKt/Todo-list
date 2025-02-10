@@ -1,26 +1,28 @@
-import { useCallback, useState } from "react";
+import { useCallback, useContext, useState } from "react";
 import { Link } from "react-router-dom";
 import TaskInput from "../components/TaskInput";
 import TaskList from "../components/TaskList";
+import { TaskContext } from "../hooks/TaskContext";
 
 const Todo = () => {
-    const [tasks, setTasks] = useState([]);
+    const { tasks, addTask, deleteTask, toggleTask } = useContext(TaskContext);
+    // const [tasks, setTasks] = useState([]);
 
-    const addTask = useCallback((task) => {
-        setTasks([...tasks, {text: task, completed: false}]);
-    },[]);
+    // const addTask = useCallback((task) => {
+    //     setTasks([...tasks, {text: task, completed: false}]);
+    // },[]);
 
-    const deleteTask = useCallback((index) => {
-        const newTasks= [...tasks];
-        newTasks.splice(index, 1);
-        setTasks(newTasks);
-    },[]);
+    // const deleteTask = useCallback((index) => {
+    //     const newTasks= [...tasks];
+    //     newTasks.splice(index, 1);
+    //     setTasks(newTasks);
+    // },[]);
     
-    const toggleTask = useCallback((index) => {
-        const newTasks= [...tasks];
-        newTasks[index].completed =!newTasks[index].completed;
-        setTasks(newTasks);
-    },[]);
+    // const toggleTask = useCallback((index) => {
+    //     const newTasks= [...tasks];
+    //     newTasks[index].completed =!newTasks[index].completed;
+    //     setTasks(newTasks);
+    // },[]);
 
     return ( 
         <div className="to-do-list">
@@ -29,7 +31,7 @@ const Todo = () => {
             <TaskInput addTask={addTask}/>
             <TaskList tasks={tasks} toggleTask={toggleTask} deleteTask={deleteTask}/>
 
-            {/* {console.log(tasks.text)} */}
+            {console.log(tasks.text)}
             <Link to="/" >
                 back to home
             </Link>
