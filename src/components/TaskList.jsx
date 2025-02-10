@@ -1,4 +1,6 @@
-const TaskList = (props) => {
+import React from "react";
+
+const TaskList = React.memo((props) => {
     return ( 
         <>
             <h1>Task List</h1>
@@ -19,6 +21,6 @@ const TaskList = (props) => {
             </ul>
         </>
      );
-}
+});
  
 export default TaskList;

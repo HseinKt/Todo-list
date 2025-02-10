@@ -1,6 +1,6 @@
-import { useState } from "react";
+import React, { useState } from "react";
 
-const TaskInput = (props) => {
+const TaskInput = React.memo((props) => {
 
     const [taskText, setTaskText] = useState("");
 
@@ -25,6 +25,6 @@ const TaskInput = (props) => {
             </form>
         </>
      );
-}
+});
  
 export default TaskInput;
