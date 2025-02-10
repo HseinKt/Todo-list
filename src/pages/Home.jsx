@@ -27,7 +27,9 @@ const Home = () => {
                 <h3>Your Task List</h3>
                 <ul>
                     {tasks.map((task, index) => (
-                        <li key={index} > {task.text} </li>
+                        <li key={index} style={{ textDecoration: task.completed ? "line-through" : "none" }}>
+                            {task.text} 
+                        </li>
                     ))}
                 </ul>
             </div>
