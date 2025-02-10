@@ -7,12 +7,18 @@ const Todo = () => {
     const [tasks, setTasks] = useState([]);
 
     const addTask = (task) => {
-        setTasks([...tasks, task]);
+        setTasks([...tasks, {text: task, completed: false}]);
     }
 
     const deleteTask = (index) => {
         const newTasks= [...tasks];
         newTasks.splice(index, 1);
+        setTasks(newTasks);
+    }
+    
+    const toggleTask = (index) => {
+        const newTasks= [...tasks];
+        newTasks[index].completed =!newTasks[index].completed;
         setTasks(newTasks);
     }
 
@@ -21,9 +27,9 @@ const Todo = () => {
             <h1>To-Do List </h1>
             {/* <p>here will be able to add and remove the lists</p> */}
             <TaskInput addTask={addTask}/>
-            <TaskList tasks={tasks} deleteTask={deleteTask}/>
+            <TaskList tasks={tasks} toggleTask={toggleTask} deleteTask={deleteTask}/>
 
-            {console.log(tasks)}
+            {/* {console.log(tasks.text)} */}
             <Link to="/" >
                 back to home
             </Link>
