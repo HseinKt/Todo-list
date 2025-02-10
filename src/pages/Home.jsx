@@ -1,7 +1,6 @@
 import { useContext } from "react";
 import { Link } from "react-router-dom";
 import { TaskContext } from "../hooks/TaskContext";
-import { DarkModeContext } from "../hooks/DarkModeContext";
 import DarkMode from "../components/DarkMode";
 
 const Home = () => {

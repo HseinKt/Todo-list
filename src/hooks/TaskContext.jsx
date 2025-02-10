@@ -1,10 +1,21 @@
-import { createContext, useState } from "react";
+import { createContext, useEffect, useState } from "react";
 
 export const TaskContext = createContext();
 
 export function TaskProvider({children}) {
 
-    const [tasks, setTasks] = useState([]);
+    const [tasks, setTasks] = useState(() => {
+        const savedTasks = sessionStorage.getItem('tasks');
+        return savedTasks ? JSON.parse(savedTasks) : [];
+    });
+
+    // Update sessionStorage whenever tasks state changes
+    useEffect(() => {
+        if (tasks.length > 0) {
+            sessionStorage.setItem('tasks', JSON.stringify(tasks));
+        }
+    }, [tasks]); 
+
     
     const addTask = (task) => {
         setTasks([...tasks, {text: task, completed: false}]);
