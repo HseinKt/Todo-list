@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Link } from "react-router-dom";
 import TaskInput from "../components/TaskInput";
 import TaskList from "../components/TaskList";
@@ -6,21 +6,21 @@ import TaskList from "../components/TaskList";
 const Todo = () => {
     const [tasks, setTasks] = useState([]);
 
-    const addTask = (task) => {
+    const addTask = useCallback((task) => {
         setTasks([...tasks, {text: task, completed: false}]);
-    }
+    },[]);
 
-    const deleteTask = (index) => {
+    const deleteTask = useCallback((index) => {
         const newTasks= [...tasks];
         newTasks.splice(index, 1);
         setTasks(newTasks);
-    }
+    },[]);
     
-    const toggleTask = (index) => {
+    const toggleTask = useCallback((index) => {
         const newTasks= [...tasks];
         newTasks[index].completed =!newTasks[index].completed;
         setTasks(newTasks);
-    }
+    },[]);
 
     return ( 
         <div className="to-do-list">
