@@ -33,8 +33,14 @@ export function TaskProvider({children}) {
         setTasks(newTasks);
     };
 
+    const editTask = (index, newText) =>{
+        const newTasks = [...tasks];
+        newTasks[index].text = newText;
+        setTasks(newTasks);
+    };
+    
     return (
-        <TaskContext.Provider value={{tasks,addTask,deleteTask,toggleTask}}>
+        <TaskContext.Provider value={{tasks,addTask,deleteTask,editTask,toggleTask}}>
             {children}
         </TaskContext.Provider>
     )
