@@ -7,11 +7,7 @@ const TaskList = React.memo((props) => {
             <ul>
                 {props.tasks.map((task,index)=> (
                     <li key={index}>
-                        <input 
-                            type="checkbox" 
-                            checked={task.completed}
-                            onChange={ (e) => {e.stopPropagation; props.toggleTask(index)}}
-                        />
+                        {/* We use stopPropagation() in event handling when we want to prevent an event from bubbling up the DOM tree, meaning it stops the event from being triggered on parent elements.*/}
                         {task.text}
                         <button onClick={(e) => {e.stopPropagation() ;props.deleteTask(index)}}>
                             ❌

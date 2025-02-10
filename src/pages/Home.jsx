@@ -29,6 +29,11 @@ const Home = () => {
                 <ul>
                     {tasks.map((task, index) => (
                         <li key={index} style={{ textDecoration: task.completed ? "line-through" : "none" }}>
+                            <input 
+                                type="checkbox" 
+                                checked={task.completed}
+                                onChange={ (e) => {e.stopPropagation; toggleTask(index)}}
+                            />
                             {task.text} 
                         </li>
                     ))}
