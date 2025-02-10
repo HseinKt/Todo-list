@@ -6,23 +6,6 @@ import { TaskContext } from "../hooks/TaskContext";
 
 const Todo = () => {
     const { tasks, addTask, deleteTask, toggleTask } = useContext(TaskContext);
-    // const [tasks, setTasks] = useState([]);
-
-    // const addTask = useCallback((task) => {
-    //     setTasks([...tasks, {text: task, completed: false}]);
-    // },[]);
-
-    // const deleteTask = useCallback((index) => {
-    //     const newTasks= [...tasks];
-    //     newTasks.splice(index, 1);
-    //     setTasks(newTasks);
-    // },[]);
-    
-    // const toggleTask = useCallback((index) => {
-    //     const newTasks= [...tasks];
-    //     newTasks[index].completed =!newTasks[index].completed;
-    //     setTasks(newTasks);
-    // },[]);
 
     return ( 
         <div className="to-do-list">
