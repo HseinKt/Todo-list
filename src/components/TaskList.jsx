@@ -5,7 +5,7 @@ const TaskList = React.memo((props) => {
     const [newText, setNewText] = useState("");
 
     return ( 
-        <>
+        <div className="task-list">
             <h1>Task List</h1>
             <ul>
                 {props.tasks.map((task,index)=> (
@@ -49,7 +49,7 @@ const TaskList = React.memo((props) => {
                     </li>
                 ))}
             </ul>
-        </>
+        </div>
      );
 });
  

@@ -12,7 +12,7 @@ const TaskInput = React.memo((props) => {
     }
     
     return ( 
-        <>
+        <div className="task-input">
             <p>Add new task: </p>
             <form onSubmit={handleSubmit}>
                 <input 
@@ -23,7 +23,7 @@ const TaskInput = React.memo((props) => {
                 />
                 <button type="submit">ADD</button>
             </form>
-        </>
+        </div>
      );
 });
  

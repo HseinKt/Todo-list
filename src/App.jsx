@@ -1,5 +1,5 @@
 import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
-import Home from "./pages/home";
+import Home from "./pages/Home";
 import Todo from "./pages/todo";
 import NotFound from "./pages/Notfound";
 import { useContext } from "react";
