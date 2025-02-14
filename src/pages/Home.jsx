@@ -40,7 +40,6 @@ const Home = () => {
                 </ul>
             </div>
             <div className="home-dark">
-                {/* dark mode */}
                 <DarkMode/>
             </div>
         </div>
