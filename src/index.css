@@ -209,10 +209,22 @@ a:hover {
   overflow-wrap: break-word;
   white-space: normal;
 }
+.delete-btn {
+  background-color: #b41e0d;
+}
+.delete-btn:hover {
+  background-color: #b93729;
+}
+.edit-btn, .save-btn, .cancel-btn {
+  background-color: #007bff;
+}
+.edit-btn:hover, .save-btn:hover, .cancel-btn:hover {
+  background-color: #005cb8;
+}
+
 .task-list button {
   padding: 10px 20px;
   margin-left: 3px;
-  background-color: var(--btn-color);
   color: white;
   border: none;
   border-radius: 8px;
@@ -221,8 +233,6 @@ a:hover {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 .task-list button:hover {
-  background-color: var(--btn-hover-color);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
 }
-
 

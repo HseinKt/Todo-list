@@ -31,7 +31,7 @@ const TaskList = React.memo((props) => {
                                     }}>
                                         Save
                                     </button>
-                                    <button onClick={() => {setNewText(""), setEditIndex(null)}}>
+                                    <button className="cancel-btn" onClick={() => {setNewText(""), setEditIndex(null)}}>
                                         Cancel
                                     </button>
                                 </div>
