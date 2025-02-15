@@ -9,19 +9,17 @@ const Todo = () => {
 
     return ( 
         <div className="to-do-list">
+            
             <div className="to-do-header">
                 <h1>To-Do List </h1>
                 <Link to="/" className="link">
                     back to home
                 </Link>
             </div>
-            {/* <div className="task-input"> */}
-                <TaskInput addTask={addTask}/>
-            {/* </div> */}
             
-            {/* <div className="task-list"> */}
-                <TaskList tasks={tasks} editTask={editTask} deleteTask={deleteTask}/>
-            {/* </div>             */}
+            <TaskInput addTask={addTask}/>
+            
+            <TaskList tasks={tasks} editTask={editTask} deleteTask={deleteTask}/>
         </div>
      );
 }

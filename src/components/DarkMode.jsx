@@ -1,12 +1,16 @@
 import { useContext } from "react";
 import { DarkModeContext } from "../hooks/DarkModeContext";
+import { FaMoon, FaSun } from "react-icons/fa";
 
 const DarkMode = () => {
     const { isDarkMode, toggleDarkMode } = useContext(DarkModeContext);
 
     return ( 
         <>
-            <button className="btn" onClick={toggleDarkMode}>{isDarkMode? 'Light Mode' : 'Dark Mode'}</button>
+            <button className="dark-mode-toggle" onClick={toggleDarkMode}>
+                {/* {isDarkMode? 'Light Mode' : 'Dark Mode'} */}
+                {isDarkMode? <FaSun/>: <FaMoon/>}
+            </button>
         </>
      );
 }

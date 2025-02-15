@@ -44,7 +44,7 @@ a:hover {
 }
 
 
-/* "dark-mode": "ligth-mode" */
+/* dark-mode */
 .dark-mode {
   background-color: var(--dark-mode-bg);
   color: var(--dark-mode-text);
@@ -52,6 +52,20 @@ a:hover {
 .light-mode {
   background-color: #ffffff;
   color: #222;
+}
+.dark-mode-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #555;
+  transition: color 0.3s ease;
+}
+.dark-mode-toggle:hover {
+  color: #969393;
 }
 
 /* Home Page */
@@ -110,6 +124,7 @@ a:hover {
 .to-do-list .link {
   padding-top: 10px;
   padding-bottom: 30px;
+  padding-right: 30px;
   text-decoration: none;
   color: #333;
   text-align: right;

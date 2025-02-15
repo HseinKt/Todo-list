@@ -1,7 +1,6 @@
 import { useContext } from "react";
 import { Link } from "react-router-dom";
 import { TaskContext } from "../hooks/TaskContext";
-import DarkMode from "../components/DarkMode";
 
 const Home = () => {
     const { tasks, toggleTask } = useContext(TaskContext);
@@ -11,7 +10,6 @@ const Home = () => {
         <div className="home-main">
             <div className="home-tasks">
                 <h1>Welcome to the Task Manager</h1>
-
                 {/* Navigation links */}
                 <Link to="/todo"> 
                     <button className="btn">Manage your tasks</button>
@@ -38,9 +36,6 @@ const Home = () => {
                         </li>
                     ))}
                 </ul>
-            </div>
-            <div className="home-dark">
-                <DarkMode/>
             </div>
         </div>
         </>

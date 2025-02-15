@@ -4,12 +4,14 @@ import Todo from "./pages/todo";
 import NotFound from "./pages/Notfound";
 import { useContext } from "react";
 import { DarkModeContext } from "./hooks/DarkModeContext";
+import DarkMode from "./components/DarkMode";
 
 const App = () => {
     const {isDarkMode} = useContext(DarkModeContext)
     return ( 
         <>
             <div className={isDarkMode? "dark-mode": "light-mode"}>
+                <DarkMode/>
                 <Router>
                 <div className="content">
                     <Routes>
