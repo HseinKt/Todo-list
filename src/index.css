@@ -114,6 +114,26 @@ a:hover {
 }
 .home-list input {
   margin-right: 5px;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--secondary-color);
+  border-radius: 5px;
+  background: white;
+  cursor: pointer;
+  position: relative;
+}
+.home-list input:checked {
+  background-color: var(--secondary-color);
+}
+.home-list input:checked::after {
+  content: "✔";
+  color: white;
+  font-size: 16px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%); 
 }
 
 .btn {
