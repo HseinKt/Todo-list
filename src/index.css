@@ -181,14 +181,23 @@ a:hover {
   text-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
 }
 
+.to-do-list .to-do-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 /* Task input */
 .task-input{
   margin-bottom: 10px;
   padding: 10px;
   border-radius: 8px;
-  border: 1px solid #ccc;
+  border: 0.1px dotted #ccc;
   padding-left: 30px;
   padding-right: 30px;
+  display: flex;
+  flex-direction: column;
+  /* align-items: center; */
 }
 .task-input p {
   margin-bottom: 5px;
@@ -197,6 +206,7 @@ a:hover {
   display: flex;
   align-items: center;
   margin-bottom: 10px;
+  
 }
 .task-input input {
   padding: 10px;
@@ -295,4 +305,5 @@ a:hover {
 .task-list button:hover {
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
 }
+
 

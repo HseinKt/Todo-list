@@ -16,10 +16,12 @@ const Todo = () => {
                     back to home
                 </Link>
             </div>
+            <div className="to-do-main">
+                <TaskInput addTask={addTask}/>
             
-            <TaskInput addTask={addTask}/>
+                <TaskList tasks={tasks} editTask={editTask} deleteTask={deleteTask}/>
+            </div>
             
-            <TaskList tasks={tasks} editTask={editTask} deleteTask={deleteTask}/>
         </div>
      );
 }
