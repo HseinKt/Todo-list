@@ -18,6 +18,9 @@
   --btn-color: #6200ea;
   --btn-hover-color: #3700b3;
 
+  --font-size-media: 14px;
+  --font-size-header: 25px;
+
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -180,7 +183,6 @@ a:hover {
   color: var(--secondary-color);
   text-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
 }
-
 .to-do-list .to-do-main {
   display: flex;
   flex-direction: column;
@@ -197,7 +199,6 @@ a:hover {
   padding-right: 30px;
   display: flex;
   flex-direction: column;
-  /* align-items: center; */
 }
 .task-input p {
   margin-bottom: 5px;
@@ -206,7 +207,6 @@ a:hover {
   display: flex;
   align-items: center;
   margin-bottom: 10px;
-  
 }
 .task-input input {
   padding: 10px;
@@ -307,3 +307,75 @@ a:hover {
 }
 
 
+@media (max-width: 320px) {
+  /* to-do Page */
+  .to-do-list {
+    padding: 5px;
+    /* width:unset; */
+  }
+  .to-do-list .link {
+    padding-right: 0px;
+  }
+  .to-do-list .to-do-main {
+    align-items: start;
+  }
+  /* Task input */
+  .task-input{
+    margin-bottom: 10px;
+    padding: 5px;
+    border: none;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  .task-input input {
+    font-size: var(--font-size-media);
+  }
+  /* Task list */
+  .task-list h1 {
+    margin-bottom: 15px;
+    font-size: var(--font-size-header);
+  }
+  .task-list ul {
+    list-style-type: none;;
+    padding: 0;
+    margin: 0;
+  }
+  .task-list ul li {
+    margin-bottom: 8px;
+    width: 100%;
+    font-size: var(--font-size-media);
+  }
+  .task-list li form input {
+    margin-right: 7px;
+  }
+  .task-list li .task-lists p{
+    width: 100%;
+  }
+  .task-list button {
+    padding: 5px 9px;
+  }
+  .to-do-header .link {
+    font-size: var(--font-size-media);
+    padding-right: 25px;
+    padding-top: 15px;
+  }
+  .home-info .animated-paragraph {
+    font-size: var(--font-size-media);
+  }
+  .home-list li {
+    padding-bottom: 5px;
+    padding-left: 5px;
+    font-size: var(--font-size-media);
+  }
+  .home-list input {
+    width: 17px;
+    height: 17px;
+    border: 1px solid var(--secondary-color);
+  }
+  .home-list input:checked::after {
+    font-size: 14px;
+  }
+  .task-list {
+    margin-left: 10px;
+  }
+}
