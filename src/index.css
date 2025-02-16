@@ -8,7 +8,8 @@
   background-color: #ffffff;
 
   --primary-color: #4CAF50;
-  --secondary-color: #2196F3;
+  --secondary-color: #007bff;
+  --secondary-color-hover: #005cb8;
   --text-color: #333;
   --accent-color: #FF9800;
   --light-gray: #E0E0E0;
@@ -78,17 +79,41 @@ a:hover {
   flex-direction: column;
   height: 100vh;
 }
+.home-todo {
+  width:fit-content;
+  margin: 10px;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+}
 .home-info {
   display: flex;
   justify-content: center;
   flex-direction: column;
   padding-bottom: 30px;
 }
+.animated-paragraph {
+  margin: 10px;
+  padding: 10px 20px;
+}
 .home-list {
   display: flex;
   justify-content: center;
   flex-direction: column;
   padding-bottom: 30px;
+}
+.home-list ul {
+  list-style-type: decimal;
+  margin: 10px;
+  padding: 10px 20px;
+}
+.home-list li {
+  padding-bottom: 5px;
+  padding-left: 5px;
+}
+.home-list input {
+  margin-right: 5px;
 }
 
 .btn {
@@ -231,10 +256,10 @@ a:hover {
   background-color: #b93729;
 }
 .edit-btn, .save-btn, .cancel-btn {
-  background-color: #007bff;
+  background-color: var(--secondary-color);
 }
 .edit-btn:hover, .save-btn:hover, .cancel-btn:hover {
-  background-color: #005cb8;
+  background-color: var(--secondary-color-hover);
 }
 
 .task-list button {
