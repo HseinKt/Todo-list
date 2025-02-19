@@ -47,7 +47,6 @@ a:hover {
   color: #535bf2;
 }
 
-
 /* dark-mode */
 .dark-mode {
   background-color: var(--dark-mode-bg);
@@ -187,6 +186,7 @@ a:hover {
   display: flex;
   flex-direction: column;
   align-items: center;
+  height: 100vh;
 }
 
 /* Task input */
@@ -306,12 +306,18 @@ a:hover {
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
 }
 
+.footer {
+  text-align: center;
+  padding: 20px;
+  background-color: #333;
+  color: white;
+  margin-top: 50px; /* Creates spacing before footer */
+}
 
-@media (max-width: 320px) {
+@media (max-width: 480px) {
   /* to-do Page */
   .to-do-list {
     padding: 5px;
-    /* width:unset; */
   }
   .to-do-list .link {
     padding-right: 0px;
@@ -342,7 +348,7 @@ a:hover {
   }
   .task-list ul li {
     margin-bottom: 8px;
-    width: 100%;
+    width: 440px;
     font-size: var(--font-size-media);
   }
   .task-list li form input {

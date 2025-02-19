@@ -1,10 +1,11 @@
 import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 import Home from "./pages/Home";
-import Todo from "./pages/todo";
 import NotFound from "./pages/Notfound";
 import { useContext } from "react";
 import { DarkModeContext } from "./hooks/DarkModeContext";
 import DarkMode from "./components/DarkMode";
+import Todo from "./pages/Todo";
+import Footer from "./components/Footer";
 
 const App = () => {
     const {isDarkMode} = useContext(DarkModeContext)
@@ -21,6 +22,7 @@ const App = () => {
                     </Routes>
                 </div>
                 </Router>
+                <Footer />
             </div>
         </>
      );
