@@ -5,7 +5,7 @@ import TaskList from "../components/TaskList";
 import { TaskContext } from "../hooks/TaskContext";
 
 const Todo = () => {
-    const { tasks, addTask, deleteTask, editTask } = useContext(TaskContext);
+    const { tasks, addTask, deleteTask, editTask, toggleTask } = useContext(TaskContext);
 
     return ( 
         <div className="to-do-list">
@@ -19,7 +19,7 @@ const Todo = () => {
             <div className="to-do-main">
                 <TaskInput addTask={addTask}/>
             
-                <TaskList tasks={tasks} editTask={editTask} deleteTask={deleteTask}/>
+                <TaskList tasks={tasks} editTask={editTask} deleteTask={deleteTask} toggleTask={toggleTask}/>
             </div>
             
         </div>

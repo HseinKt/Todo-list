@@ -1,13 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, FormEvent } from "react";
 
-const TaskInput = React.memo((props) => {
+interface TaskInputProps {
+    addTask: (text: string) => void;
+}
+
+const TaskInput = React.memo(({ addTask }: TaskInputProps) => {
 
     const [taskText, setTaskText] = useState("");
 
-    const handleSubmit = (event) => {
+    const handleSubmit = (event: FormEvent) => {
         event.preventDefault();// Prevent page reload
-        if(taskText === "") return;
-        props.addTask(taskText);
+        const trimmed = taskText.trim();
+        if(trimmed === "") return;
+        addTask(trimmed);
         setTaskText("");
     }
     

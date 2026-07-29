@@ -5,7 +5,7 @@ import { motion, useInView } from "framer-motion";
 
 const Home = () => {
     const { tasks, toggleTask } = useContext(TaskContext);
-    const ref = useRef(null);
+    const ref = useRef<HTMLUListElement>(null);
     const isInView = useInView(ref, { once: true });
 
     const listVariants = {
@@ -69,7 +69,7 @@ const Home = () => {
                             <input 
                                 type="checkbox" 
                                 checked={task.completed}
-                                onChange={ (e) => {e.stopPropagation; toggleTask(index)}}
+                                onChange={(e) => {e.stopPropagation(); toggleTask(index)}}
                                 className="checkbox-tasks"
                             />
                             {task.text} 
