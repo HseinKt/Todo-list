@@ -9,6 +9,7 @@ import { UserModule } from './modules/user/user.module';
 import { TaskModule } from './modules/task/task.module';
 import { BudgetModule } from './modules/budget/budget.module';
 import { NotificationModule } from './modules/notification/notification.module';
+import { NoteModule } from './modules/note/note.module';
 import { JwtAuthGuard } from './common/guards/auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { PermissionsGuard } from './common/guards/permissions.guard';
@@ -40,6 +41,7 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
     TaskModule,
     BudgetModule,
     NotificationModule,
+    NoteModule,
   ],
   providers: [
     {

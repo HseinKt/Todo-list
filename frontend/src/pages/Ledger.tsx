@@ -1,56 +1,55 @@
 import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, TrendingUp, TrendingDown, DollarSign, Tag, Trash2 } from 'lucide-react';
+import { Plus, TrendingUp, TrendingDown, DollarSign, Tag, AlertCircle } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { Input } from '../components/ui/Input';
+import { useLedger } from '../hooks/useLedger';
 
-interface Transaction {
-  id: string;
-  amount: number;
-  type: 'INFLOW' | 'OUTFLOW';
-  category: string;
-  description?: string;
-  date: string;
-}
+const transactionSchema = z.object({
+  amount: z.string().refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
+    message: 'Amount must be a positive number',
+  }),
+  type: z.enum(['INFLOW', 'OUTFLOW']),
+  category: z.string().min(1, { message: 'Category is required' }),
+  description: z.string().optional(),
+});
+
+type TransactionFormData = z.infer<typeof transactionSchema>;
 
 export const Ledger: React.FC = () => {
-  const [transactions, setTransactions] = useState<Transaction[]>([
-    { id: '1', amount: 5000, type: 'INFLOW', category: 'Salary', description: 'Monthly primary paycheck', date: '2026-08-01' },
-    { id: '2', amount: 120, type: 'OUTFLOW', category: 'Food', description: 'Grocery shopping', date: '2026-08-02' },
-    { id: '3', amount: 80, type: 'OUTFLOW', category: 'Transport', description: 'Fuel refill', date: '2026-08-03' },
-  ]);
-
+  const { transactions, isLoading, error, createTransaction } = useLedger();
   const [isOpen, setIsOpen] = useState(false);
-  const [amount, setAmount] = useState('');
-  const [type, setType] = useState<'INFLOW' | 'OUTFLOW'>('OUTFLOW');
-  const [category, setCategory] = useState('');
-  const [description, setDescription] = useState('');
+  const [selectedType, setSelectedType] = useState<'INFLOW' | 'OUTFLOW'>('OUTFLOW');
 
-  const handleCreateTransaction = (e: React.FormEvent) => {
-    e.preventDefault();
-    const numAmount = parseFloat(amount);
-    if (isNaN(numAmount) || numAmount <= 0 || !category.trim()) return;
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+    reset,
+  } = useForm<TransactionFormData>({
+    resolver: zodResolver(transactionSchema),
+    defaultValues: {
+      amount: '',
+      type: 'OUTFLOW',
+      category: '',
+      description: '',
+    },
+  });
 
-    const newTx: Transaction = {
-      id: Date.now().toString(),
-      amount: numAmount,
-      type,
-      category,
-      description: description || undefined,
-      date: new Date().toISOString().split('T')[0],
-    };
-
-    setTransactions((prev) => [newTx, ...prev]);
-    setAmount('');
-    setCategory('');
-    setDescription('');
+  const onSubmit = (data: TransactionFormData) => {
+    createTransaction({
+      ...data,
+      amount: parseFloat(data.amount),
+    });
+    reset();
+    setSelectedType('OUTFLOW');
     setIsOpen(false);
-  };
-
-  const deleteTransaction = (id: string) => {
-    setTransactions((prev) => prev.filter((t) => t.id !== id));
   };
 
   const getInflows = () =>
@@ -64,6 +63,15 @@ export const Ledger: React.FC = () => {
       .reduce((sum, t) => sum + t.amount, 0);
 
   const getNetWorth = () => getInflows() - getOutflows();
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-destructive gap-2 text-sm font-medium">
+        <AlertCircle size={24} />
+        <span>Failed to load financial records from the database.</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto py-6">
@@ -87,7 +95,7 @@ export const Ledger: React.FC = () => {
             <DollarSign size={16} className="text-accent" />
           </div>
           <h2 className="text-3xl font-extrabold tracking-tight text-foreground">
-            ${getNetWorth().toLocaleString()}
+            {isLoading ? '$...' : `$${getNetWorth().toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           </h2>
           <p className="text-[10px] text-muted-foreground">Current calculated capital balance</p>
         </Card>
@@ -98,7 +106,7 @@ export const Ledger: React.FC = () => {
             <TrendingUp size={16} className="text-emerald-500" />
           </div>
           <h2 className="text-3xl font-extrabold tracking-tight text-emerald-500">
-            ${getInflows().toLocaleString()}
+            {isLoading ? '$...' : `$${getInflows().toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           </h2>
           <p className="text-[10px] text-muted-foreground">Active positive revenue channels</p>
         </Card>
@@ -109,7 +117,7 @@ export const Ledger: React.FC = () => {
             <TrendingDown size={16} className="text-red-500" />
           </div>
           <h2 className="text-3xl font-extrabold tracking-tight text-red-500">
-            ${getOutflows().toLocaleString()}
+            {isLoading ? '$...' : `$${getOutflows().toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           </h2>
           <p className="text-[10px] text-muted-foreground">Categorized wealth deductions</p>
         </Card>
@@ -121,75 +129,83 @@ export const Ledger: React.FC = () => {
         </h3>
 
         <div className="divide-y divide-border/40 overflow-hidden">
-          <AnimatePresence>
-            {transactions.length > 0 ? (
-              transactions.map((tx) => (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  key={tx.id}
-                  className="py-3 flex items-center justify-between gap-4 group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`p-2 rounded-lg ${
-                        tx.type === 'INFLOW'
-                          ? 'bg-emerald-500/10 text-emerald-500'
-                          : 'bg-red-500/10 text-red-500'
-                      }`}
-                    >
-                      {tx.type === 'INFLOW' ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                    </div>
-                    <div className="space-y-0.5">
-                      <p className="text-xs font-semibold text-foreground">{tx.description || tx.category}</p>
-                      <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                        <span className="flex items-center gap-0.5">
-                          <Tag size={10} />
-                          {tx.category}
-                        </span>
-                        <span>•</span>
-                        <span>{tx.date}</span>
+          {isLoading ? (
+            [...Array(4)].map((_, idx) => (
+              <div key={idx} className="py-4 flex items-center justify-between gap-4 animate-pulse">
+                <div className="flex items-center gap-3 w-1/2">
+                  <div className="w-8 h-8 bg-secondary rounded-lg" />
+                  <div className="space-y-1.5 flex-1">
+                    <div className="h-3.5 bg-secondary rounded w-3/4" />
+                    <div className="h-3 bg-secondary rounded w-1/2" />
+                  </div>
+                </div>
+                <div className="h-4 bg-secondary rounded w-16" />
+              </div>
+            ))
+          ) : (
+            <AnimatePresence>
+              {transactions.length > 0 ? (
+                transactions.map((tx) => (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    key={tx.id}
+                    className="py-3 flex items-center justify-between gap-4 group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`p-2 rounded-lg ${
+                          tx.type === 'INFLOW'
+                            ? 'bg-emerald-500/10 text-emerald-500'
+                            : 'bg-red-500/10 text-red-500'
+                        }`}
+                      >
+                        {tx.type === 'INFLOW' ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                      </div>
+                      <div className="space-y-0.5">
+                        <p className="text-xs font-semibold text-foreground">{tx.description || tx.category}</p>
+                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                          <span className="flex items-center gap-0.5">
+                            <Tag size={10} />
+                            {tx.category}
+                          </span>
+                          <span>•</span>
+                          <span>{tx.date}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="flex items-center gap-3.5">
-                    <span
-                      className={`text-xs font-bold font-mono ${
-                        tx.type === 'INFLOW' ? 'text-emerald-500' : 'text-foreground'
-                      }`}
-                    >
-                      {tx.type === 'INFLOW' ? '+' : '-'}${tx.amount.toLocaleString()}
-                    </span>
-                    <button
-                      onClick={() => deleteTransaction(tx.id)}
-                      className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition p-0.5 rounded cursor-pointer"
-                    >
-                      <Trash2 size={12} />
-                    </button>
-                  </div>
-                </motion.div>
-              ))
-            ) : (
-              <div className="text-center py-12 text-sm text-muted-foreground">
-                No ledger transactions logged yet
-              </div>
-            )}
-          </AnimatePresence>
+                    <div className="flex items-center gap-3.5">
+                      <span
+                        className={`text-xs font-bold font-mono ${
+                          tx.type === 'INFLOW' ? 'text-emerald-500' : 'text-foreground'
+                        }`}
+                      >
+                        {tx.type === 'INFLOW' ? '+' : '-'}${tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                  </motion.div>
+                ))
+              ) : (
+                <div className="text-center py-12 text-sm text-muted-foreground">
+                  No ledger transactions logged yet
+                </div>
+              )}
+            </AnimatePresence>
+          )}
         </div>
       </Card>
 
       <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Log New Transaction">
-        <form onSubmit={handleCreateTransaction} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <Input
             label="Amount ($)"
             type="number"
             step="0.01"
             placeholder="0.00"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            required
+            error={errors.amount?.message}
+            {...register('amount')}
           />
 
           <div className="space-y-1 text-left">
@@ -199,9 +215,12 @@ export const Ledger: React.FC = () => {
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => setType('INFLOW')}
+                onClick={() => {
+                  setSelectedType('INFLOW');
+                  setValue('type', 'INFLOW');
+                }}
                 className={`py-2 rounded-lg text-xs font-semibold border transition cursor-pointer ${
-                  type === 'INFLOW'
+                  selectedType === 'INFLOW'
                     ? 'bg-emerald-500/10 border-emerald-500 text-emerald-500'
                     : 'bg-card border-border text-muted-foreground hover:text-foreground'
                 }`}
@@ -210,9 +229,12 @@ export const Ledger: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => setType('OUTFLOW')}
+                onClick={() => {
+                  setSelectedType('OUTFLOW');
+                  setValue('type', 'OUTFLOW');
+                }}
                 className={`py-2 rounded-lg text-xs font-semibold border transition cursor-pointer ${
-                  type === 'OUTFLOW'
+                  selectedType === 'OUTFLOW'
                     ? 'bg-red-500/10 border-red-500 text-red-500'
                     : 'bg-card border-border text-muted-foreground hover:text-foreground'
                 }`}
@@ -225,16 +247,15 @@ export const Ledger: React.FC = () => {
           <Input
             label="Category"
             placeholder="e.g. Salary, Rent, Groceries"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            required
+            error={errors.category?.message}
+            {...register('category')}
           />
 
           <Input
             label="Description (Optional)"
             placeholder="e.g. Spent on grocery run"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            error={errors.description?.message}
+            {...register('description')}
           />
 
           <div className="flex justify-end gap-2.5 pt-4">

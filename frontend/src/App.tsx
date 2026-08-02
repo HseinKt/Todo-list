@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, Outlet } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastProvider } from './components/ui/Toast';
 import { Sidebar } from './components/Sidebar';
 import { CommandPalette } from './components/CommandPalette';
+import { ProtectedRoute } from './components/ProtectedRoute';
 import { Landing } from './pages/Landing';
 import { Dashboard } from './pages/Dashboard';
 import { Chronos } from './pages/Chronos';
@@ -13,10 +15,34 @@ import { Settings } from './pages/Settings';
 import { Login } from './pages/Login';
 
 const MainLayout: React.FC = () => {
-  const [currentTab, setTab] = useState('dashboard');
   const [isCommandOpen, setIsCommandOpen] = useState(false);
-  const [showLogin, setShowLogin] = useState(false);
+  const navigate = useNavigate();
+
+  const handleSetTab = (tab: string) => {
+    navigate(`/app/${tab}`);
+  };
+
+  const currentTab = window.location.pathname.split('/').pop() || 'dashboard';
+
+  return (
+    <div className="flex h-screen w-screen overflow-hidden bg-background text-foreground">
+      <Sidebar currentTab={currentTab} setTab={handleSetTab} />
+      <div className="flex-1 flex flex-col overflow-y-auto p-8 relative">
+        <Outlet />
+      </div>
+
+      <CommandPalette
+        isOpen={isCommandOpen}
+        onClose={() => setIsCommandOpen(false)}
+        setTab={handleSetTab}
+      />
+    </div>
+  );
+};
+
+const AuthGate: React.FC = () => {
   const { user, loading } = useAuth();
+  const navigate = useNavigate();
 
   if (loading) {
     return (
@@ -26,57 +52,48 @@ const MainLayout: React.FC = () => {
     );
   }
 
-  // If the user is not authenticated, toggle between Landing Page and Login Page
-  if (!user) {
-    return showLogin ? (
-      <Login onBackToLanding={() => setShowLogin(false)} />
-    ) : (
-      <Landing onGetStarted={() => setShowLogin(true)} />
-    );
+  if (user) {
+    return <Navigate to="/app/dashboard" replace />;
   }
 
-  const renderContent = () => {
-    switch (currentTab) {
-      case 'dashboard':
-        return <Dashboard />;
-      case 'tasks':
-        return <Chronos />;
-      case 'ledger':
-        return <Ledger />;
-      case 'notebook':
-        return <Notebook />;
-      case 'settings':
-        return <Settings />;
-      default:
-        return <Dashboard />;
-    }
-  };
+  return <Login onBackToLanding={() => navigate('/')} />;
+};
+
+const AppRoutes: React.FC = () => {
+  const navigate = useNavigate();
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-background text-foreground">
-      <Sidebar currentTab={currentTab} setTab={setTab} />
-      <div className="flex-1 flex flex-col overflow-y-auto p-8 relative">
-        {renderContent()}
-      </div>
+    <Routes>
+      <Route path="/" element={<Landing onGetStarted={() => navigate('/login')} />} />
+      <Route path="/login" element={<AuthGate />} />
 
-      <CommandPalette
-        isOpen={isCommandOpen}
-        onClose={() => setIsCommandOpen(false)}
-        setTab={setTab}
-      />
-    </div>
+      <Route path="/app" element={<ProtectedRoute />}>
+        <Route element={<MainLayout />}>
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="tasks" element={<Chronos />} />
+          <Route path="ledger" element={<Ledger />} />
+          <Route path="notebook" element={<Notebook />} />
+          <Route path="settings" element={<Settings />} />
+        </Route>
+      </Route>
+
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 };
 
 function App() {
   return (
-    <ThemeProvider>
-      <ToastProvider>
-        <AuthProvider>
-          <MainLayout />
-        </AuthProvider>
-      </ToastProvider>
-    </ThemeProvider>
+    <BrowserRouter>
+      <ThemeProvider>
+        <ToastProvider>
+          <AuthProvider>
+            <AppRoutes />
+          </AuthProvider>
+        </ToastProvider>
+      </ThemeProvider>
+    </BrowserRouter>
   );
 }
 

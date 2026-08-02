@@ -1,40 +1,72 @@
 import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { useAuth } from '../contexts/AuthContext';
 import { Sparkles, Shield } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 
+const loginSchema = z.object({
+  email: z.string().email({ message: 'Please enter a valid email address' }),
+  password: z.string().min(6, { message: 'Password must be at least 6 characters long' }),
+});
+
+const signupSchema = z.object({
+  fullName: z.string().min(2, { message: 'Name must be at least 2 characters long' }),
+  email: z.string().email({ message: 'Please enter a valid email address' }),
+  password: z.string().min(6, { message: 'Password must be at least 6 characters long' }),
+});
+
+const mfaSchema = z.object({
+  mfaCode: z.string().length(6, { message: 'MFA verification code must be exactly 6 digits' }),
+});
+
 interface LoginProps {
   onBackToLanding: () => void;
+}
+
+interface AuthFormData {
+  email?: string;
+  password?: string;
+  fullName?: string;
+  mfaCode?: string;
 }
 
 export const Login: React.FC<LoginProps> = ({ onBackToLanding }) => {
   const { login, signup, verify2Fa, require2Fa } = useAuth();
   const [isRegister, setIsRegister] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [mfaCode, setMfaCode] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const currentSchema = require2Fa ? mfaSchema : isRegister ? signupSchema : loginSchema;
+  
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<AuthFormData>({
+    resolver: zodResolver(currentSchema) as any,
+  });
+
+  const onSubmit = async (values: any) => {
     if (isLoading) return;
     setError('');
     setSuccess('');
     setIsLoading(true);
     try {
       if (require2Fa) {
-        await verify2Fa(mfaCode);
+        await verify2Fa(values.mfaCode);
       } else if (isRegister) {
-        await signup(email, password, fullName);
+        await signup(values.email, values.password, values.fullName);
         setSuccess('Registration successful! You can now log in.');
         setIsRegister(false);
+        reset();
       } else {
-        await login(email, password);
+        await login(values.email, values.password);
       }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Authentication failed. Please try again.');
@@ -80,16 +112,15 @@ export const Login: React.FC<LoginProps> = ({ onBackToLanding }) => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {require2Fa ? (
             <Input
               label="6-Digit Verification Code"
               type="text"
               placeholder="e.g. 123456"
               maxLength={6}
-              value={mfaCode}
-              onChange={(e) => setMfaCode(e.target.value)}
-              required
+              error={errors.mfaCode?.message as string}
+              {...register('mfaCode')}
             />
           ) : (
             <>
@@ -98,26 +129,23 @@ export const Login: React.FC<LoginProps> = ({ onBackToLanding }) => {
                   label="Full Name"
                   type="text"
                   placeholder="Your Name"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  required
+                  error={errors.fullName?.message as string}
+                  {...register('fullName')}
                 />
               )}
               <Input
                 label="Email address"
                 type="email"
                 placeholder="you@domain.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
+                error={errors.email?.message as string}
+                {...register('email')}
               />
               <Input
                 label="Password"
                 type="password"
                 placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
+                error={errors.password?.message as string}
+                {...register('password')}
               />
             </>
           )}
@@ -134,6 +162,7 @@ export const Login: React.FC<LoginProps> = ({ onBackToLanding }) => {
                 setIsRegister(!isRegister);
                 setError('');
                 setSuccess('');
+                reset();
               }}
               className="text-xs text-accent font-semibold hover:underline cursor-pointer transition"
             >

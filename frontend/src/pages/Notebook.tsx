@@ -1,66 +1,72 @@
-import React, { useState } from 'react';
-import { Plus, BookOpen, Trash2, FileText, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, BookOpen, Trash2, FileText, ChevronRight, AlertCircle } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-
-interface Note {
-  id: string;
-  title: string;
-  content: string;
-  updatedAt: string;
-}
+import { useNotes } from '../hooks/useNotes';
 
 export const Notebook: React.FC = () => {
-  const [notes, setNotes] = useState<Note[]>([
-    { id: '1', title: 'Horizon OS Product Blueprint', content: 'Explore the full architectural mapping of the design system components, including HSL color presets, layout frames, and typography styles for the frontend and backend.', updatedAt: '2026-08-01' },
-    { id: '2', title: 'Lifetime Goals & Milestones', content: '1. Build personal portfolio dashboard\n2. Complete NestJS integration modules\n3. Learn Rust foundations', updatedAt: '2026-08-02' },
-  ]);
+  const { notes, isLoading, error, createNote, updateNote, deleteNote } = useNotes();
+  const [activeNoteId, setActiveNoteId] = useState<string>('');
+  
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
 
-  const [activeNoteId, setActiveNoteId] = useState<string>('1');
-  const [title, setTitle] = useState(notes[0]?.title || '');
-  const [content, setContent] = useState(notes[0]?.content || '');
+  useEffect(() => {
+    if (activeNoteId) {
+      const active = notes.find((n) => n.id === activeNoteId);
+      if (active) {
+        setTitle(active.title);
+        setContent(active.content);
+      }
+    } else if (notes.length > 0 && !activeNoteId) {
+      setActiveNoteId(notes[0].id);
+      setTitle(notes[0].title);
+      setContent(notes[0].content);
+    }
+  }, [activeNoteId, notes]);
 
-
-  const handleSelectNote = (note: Note) => {
-    setActiveNoteId(note.id);
-    setTitle(note.title);
-    setContent(note.content);
+  const handleSelectNote = (id: string) => {
+    setActiveNoteId(id);
+    const selected = notes.find((n) => n.id === id);
+    if (selected) {
+      setTitle(selected.title);
+      setContent(selected.content);
+    }
   };
 
-  const handleCreateNote = () => {
-    const newNote: Note = {
-      id: Date.now().toString(),
-      title: 'Untitled Draft',
-      content: '',
-      updatedAt: new Date().toISOString().split('T')[0],
-    };
-    setNotes((prev) => [newNote, ...prev]);
-    setActiveNoteId(newNote.id);
-    setTitle(newNote.title);
-    setContent(newNote.content);
+  const handleCreateNote = async () => {
+    try {
+      const newNote = await createNote({ title: 'Untitled Draft', content: '' });
+      setActiveNoteId(newNote.id);
+      setTitle(newNote.title);
+      setContent(newNote.content);
+    } catch (err) {
+      console.error('Failed to create note', err);
+    }
   };
 
   const handleSaveNote = () => {
-    setNotes((prev) =>
-      prev.map((n) =>
-        n.id === activeNoteId
-          ? { ...n, title, content, updatedAt: new Date().toISOString().split('T')[0] }
-          : n
-      )
-    );
+    if (!activeNoteId) return;
+    updateNote({ id: activeNoteId, title, content });
   };
 
   const handleDeleteNote = (id: string) => {
-    const remaining = notes.filter((n) => n.id !== id);
-    setNotes(remaining);
-    if (remaining.length > 0) {
-      handleSelectNote(remaining[0]);
-    } else {
+    deleteNote(id);
+    if (activeNoteId === id) {
       setActiveNoteId('');
       setTitle('');
       setContent('');
     }
   };
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-destructive gap-2 text-sm font-medium">
+        <AlertCircle size={24} />
+        <span>Failed to load notes from the database server.</span>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto py-6 h-[calc(100vh-100px)] flex flex-col space-y-6">
@@ -87,26 +93,38 @@ export const Notebook: React.FC = () => {
           </div>
 
           <div className="flex-1 overflow-y-auto space-y-2 pr-1">
-            {notes.map((note) => {
-              const isActive = note.id === activeNoteId;
-              return (
-                <button
-                  key={note.id}
-                  onClick={() => handleSelectNote(note)}
-                  className={`w-full flex items-start gap-3 p-3 rounded-xl transition text-left cursor-pointer ${
-                    isActive ? 'bg-secondary' : 'hover:bg-secondary/40'
-                  }`}
-                >
-                  <FileText size={16} className={`mt-0.5 shrink-0 ${isActive ? 'text-accent' : 'text-muted-foreground'}`} />
-                  <div className="space-y-1 min-w-0">
-                    <h4 className="text-xs font-bold text-foreground truncate">{note.title || 'Untitled'}</h4>
-                    <p className="text-[10px] text-muted-foreground line-clamp-1">{note.content || 'Empty note content...'}</p>
-                    <span className="text-[9px] text-muted-foreground/80 block font-mono">{note.updatedAt}</span>
-                  </div>
-                  <ChevronRight size={14} className="ml-auto text-muted-foreground/60 shrink-0 self-center" />
-                </button>
-              );
-            })}
+            {isLoading ? (
+              [...Array(3)].map((_, idx) => (
+                <div key={idx} className="p-3 bg-secondary/20 rounded-xl space-y-2 animate-pulse">
+                  <div className="h-3 bg-secondary rounded w-3/4" />
+                  <div className="h-2.5 bg-secondary rounded w-5/6" />
+                </div>
+              ))
+            ) : notes.length > 0 ? (
+              notes.map((note) => {
+                const isActive = note.id === activeNoteId;
+                return (
+                  <button
+                    key={note.id}
+                    onClick={() => handleSelectNote(note.id)}
+                    className={`w-full flex items-start gap-3 p-3 rounded-xl transition text-left cursor-pointer ${
+                      isActive ? 'bg-secondary' : 'hover:bg-secondary/40'
+                    }`}
+                  >
+                    <FileText size={16} className={`mt-0.5 shrink-0 ${isActive ? 'text-accent' : 'text-muted-foreground'}`} />
+                    <div className="space-y-1 min-w-0 flex-1">
+                      <h4 className="text-xs font-bold text-foreground truncate">{note.title || 'Untitled'}</h4>
+                      <p className="text-[10px] text-muted-foreground line-clamp-1">{note.content || 'Empty note...'}</p>
+                    </div>
+                    <ChevronRight size={14} className="ml-auto text-muted-foreground/60 shrink-0 self-center" />
+                  </button>
+                );
+              })
+            ) : (
+              <div className="text-center py-12 text-xs text-muted-foreground">
+                No drafts found
+              </div>
+            )}
           </div>
         </Card>
 
