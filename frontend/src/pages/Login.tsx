@@ -1,8 +1,15 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Sparkles, Shield } from 'lucide-react';
+import { Button } from '../components/ui/Button';
+import { Card } from '../components/ui/Card';
+import { Input } from '../components/ui/Input';
 
-export const Login: React.FC = () => {
+interface LoginProps {
+  onBackToLanding: () => void;
+}
+
+export const Login: React.FC<LoginProps> = ({ onBackToLanding }) => {
   const { login, signup, verify2Fa, require2Fa } = useAuth();
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('');
@@ -37,128 +44,104 @@ export const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-neutral-50 dark:bg-neutral-950 p-6 select-none">
-      <div className="w-full max-w-md bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-8 rounded-2xl shadow-xl space-y-6">
-        <div className="text-center">
-          <div className="inline-flex p-3 bg-violet-100 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400 rounded-full mb-3">
-            <Sparkles size={24} className="animate-pulse" />
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6 select-none relative">
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(128,128,128,0.01)_1px,transparent_1px),linear-gradient(to_bottom,rgba(128,128,128,0.01)_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
+      
+      <button
+        onClick={onBackToLanding}
+        className="absolute top-6 left-6 text-xs text-muted-foreground hover:text-foreground font-medium cursor-pointer transition"
+      >
+        ← Back to home
+      </button>
+
+      <Card className="w-full max-w-md p-8 shadow-apple-lg border border-border/80" glass>
+        <div className="text-center mb-6">
+          <div className="inline-flex p-3 bg-accent/10 text-accent rounded-full mb-3">
+            <Sparkles size={20} className="animate-pulse" />
           </div>
-          <h2 className="text-xl font-bold tracking-tight text-neutral-900 dark:text-white">
+          <h2 className="text-xl font-bold tracking-tight text-foreground">
             {require2Fa ? 'MFA Security Challenge' : isRegister ? 'Join Horizon OS' : 'Sign in to Horizon OS'}
           </h2>
-          <p className="text-xs text-neutral-500 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             {require2Fa ? 'Verify your identity to proceed.' : 'The operating system for human potential.'}
           </p>
         </div>
 
         {error && (
-          <div className="bg-red-50 dark:bg-red-950/20 text-red-650 dark:text-red-400 text-xs p-3 rounded-lg border border-red-250 dark:border-red-900/50 font-medium">
-            {error}
+          <div className="bg-destructive/10 border border-destructive/20 text-destructive text-xs p-3 rounded-lg text-left mb-4 font-medium flex items-center gap-2">
+            <Shield size={14} />
+            <span>{error}</span>
           </div>
         )}
 
         {success && (
-          <div className="bg-emerald-50 dark:bg-emerald-950/20 text-emerald-650 dark:text-emerald-400 text-xs p-3 rounded-lg border border-emerald-250 dark:border-emerald-900/50 font-medium">
+          <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-250 dark:border-emerald-900/50 text-emerald-600 dark:text-emerald-400 text-xs p-3 rounded-lg text-left mb-4 font-medium">
             {success}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {require2Fa ? (
-            <div>
-              <label className="block text-xs font-semibold text-neutral-500 mb-1 flex items-center gap-1">
-                <Shield size={12} />
-                One-Time OTP Code
-              </label>
-              <input
-                type="text"
-                maxLength={6}
-                required
-                placeholder="000000"
-                value={mfaCode}
-                onChange={(e) => setMfaCode(e.target.value)}
-                className="w-full text-center tracking-[1em] text-lg bg-neutral-50 dark:bg-neutral-950 border border-neutral-250 dark:border-neutral-850 px-4 py-2.5 rounded-lg focus:outline-violet-500 text-neutral-950 dark:text-white"
-              />
-            </div>
+            <Input
+              label="6-Digit Verification Code"
+              type="text"
+              placeholder="e.g. 123456"
+              maxLength={6}
+              value={mfaCode}
+              onChange={(e) => setMfaCode(e.target.value)}
+              required
+            />
           ) : (
             <>
               {isRegister && (
-                <div>
-                  <label className="block text-xs font-semibold text-neutral-500 mb-1">Full Name</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Sarah Jenkins"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="w-full bg-neutral-50 dark:bg-neutral-950 border border-neutral-250 dark:border-neutral-850 px-4 py-2.5 rounded-lg text-sm focus:outline-violet-500 text-neutral-950 dark:text-white"
-                  />
-                </div>
+                <Input
+                  label="Full Name"
+                  type="text"
+                  placeholder="Your Name"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required
+                />
               )}
-              <div>
-                <label className="block text-xs font-semibold text-neutral-500 mb-1">Email address</label>
-                <input
-                  type="email"
-                  required
-                  placeholder="name@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-neutral-50 dark:bg-neutral-950 border border-neutral-250 dark:border-neutral-850 px-4 py-2.5 rounded-lg text-sm focus:outline-violet-500 text-neutral-950 dark:text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-neutral-500 mb-1">Password</label>
-                <input
-                  type="password"
-                  required
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-neutral-50 dark:bg-neutral-950 border border-neutral-250 dark:border-neutral-850 px-4 py-2.5 rounded-lg text-sm focus:outline-violet-500 text-neutral-950 dark:text-white"
-                />
-              </div>
+              <Input
+                label="Email address"
+                type="email"
+                placeholder="you@domain.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+              <Input
+                label="Password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
             </>
           )}
 
-          <button
-            type="submit"
-            disabled={isLoading}
-            className={`w-full py-2.5 rounded-lg text-sm font-semibold transition cursor-pointer flex items-center justify-center gap-2 ${
-              isLoading
-                ? 'bg-neutral-300 dark:bg-neutral-800 text-neutral-500 cursor-not-allowed'
-                : 'bg-violet-600 hover:bg-violet-750 text-white'
-            }`}
-          >
-            {isLoading ? (
-              <span className="w-4 h-4 border-2 border-neutral-500 border-t-transparent rounded-full animate-spin"></span>
-            ) : null}
-            <span>
-              {isLoading
-                ? 'Connecting...'
-                : require2Fa
-                ? 'Verify Code'
-                : isRegister
-                ? 'Create Account'
-                : 'Sign In'}
-            </span>
-          </button>
+          <Button type="submit" className="w-full" isLoading={isLoading}>
+            {require2Fa ? 'Verify Code' : isRegister ? 'Create Account' : 'Sign In'}
+          </Button>
         </form>
 
         {!require2Fa && (
-          <div className="text-center pt-2">
+          <div className="text-center pt-4">
             <button
               onClick={() => {
                 setIsRegister(!isRegister);
                 setError('');
                 setSuccess('');
               }}
-              className="text-xs text-violet-600 dark:text-violet-400 font-semibold hover:underline cursor-pointer"
+              className="text-xs text-accent font-semibold hover:underline cursor-pointer transition"
             >
               {isRegister ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
             </button>
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 };

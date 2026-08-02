@@ -1,140 +1,252 @@
 import React, { useState } from 'react';
-import { ArrowUpRight, ArrowDownRight, Wallet, Plus } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Plus, TrendingUp, TrendingDown, DollarSign, Tag, Trash2 } from 'lucide-react';
+import { Card } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
+import { Modal } from '../components/ui/Modal';
+import { Input } from '../components/ui/Input';
+
+interface Transaction {
+  id: string;
+  amount: number;
+  type: 'INFLOW' | 'OUTFLOW';
+  category: string;
+  description?: string;
+  date: string;
+}
 
 export const Ledger: React.FC = () => {
-  const [transactions, setTransactions] = useState([
-    { id: '1', description: 'Supabase Freelance Payment', amount: 850.0, type: 'INFLOW', date: 'July 30' },
-    { id: '2', description: 'SaaS Hosting Bill', amount: 15.0, type: 'OUTFLOW', date: 'July 29' },
-    { id: '3', description: 'Grocery shopping', amount: 62.40, type: 'OUTFLOW', date: 'July 28' },
+  const [transactions, setTransactions] = useState<Transaction[]>([
+    { id: '1', amount: 5000, type: 'INFLOW', category: 'Salary', description: 'Monthly primary paycheck', date: '2026-08-01' },
+    { id: '2', amount: 120, type: 'OUTFLOW', category: 'Food', description: 'Grocery shopping', date: '2026-08-02' },
+    { id: '3', amount: 80, type: 'OUTFLOW', category: 'Transport', description: 'Fuel refill', date: '2026-08-03' },
   ]);
 
-  const [description, setDescription] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
   const [amount, setAmount] = useState('');
   const [type, setType] = useState<'INFLOW' | 'OUTFLOW'>('OUTFLOW');
+  const [category, setCategory] = useState('');
+  const [description, setDescription] = useState('');
 
-  const handleAddTransaction = (e: React.FormEvent) => {
+  const handleCreateTransaction = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!description.trim() || !amount.trim()) return;
-    setTransactions([
-      {
-        id: Date.now().toString(),
-        description,
-        amount: parseFloat(amount),
-        type,
-        date: 'Today',
-      },
-      ...transactions,
-    ]);
-    setDescription('');
+    const numAmount = parseFloat(amount);
+    if (isNaN(numAmount) || numAmount <= 0 || !category.trim()) return;
+
+    const newTx: Transaction = {
+      id: Date.now().toString(),
+      amount: numAmount,
+      type,
+      category,
+      description: description || undefined,
+      date: new Date().toISOString().split('T')[0],
+    };
+
+    setTransactions((prev) => [newTx, ...prev]);
     setAmount('');
+    setCategory('');
+    setDescription('');
+    setIsOpen(false);
   };
 
-  const totals = transactions.reduce(
-    (acc, t) => {
-      if (t.type === 'INFLOW') {
-        acc.inflow += t.amount;
-      } else {
-        acc.outflow += t.amount;
-      }
-      return acc;
-    },
-    { inflow: 0, outflow: 0 }
-  );
+  const deleteTransaction = (id: string) => {
+    setTransactions((prev) => prev.filter((t) => t.id !== id));
+  };
 
-  const netBalance = totals.inflow - totals.outflow;
+  const getInflows = () =>
+    transactions
+      .filter((t) => t.type === 'INFLOW')
+      .reduce((sum, t) => sum + t.amount, 0);
+
+  const getOutflows = () =>
+    transactions
+      .filter((t) => t.type === 'OUTFLOW')
+      .reduce((sum, t) => sum + t.amount, 0);
+
+  const getNetWorth = () => getInflows() - getOutflows();
 
   return (
-    <div className="flex-1 bg-white dark:bg-neutral-950 p-8 overflow-y-auto text-neutral-800 dark:text-neutral-100">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-white">Ledger Wealth</h1>
-        <p className="text-sm text-neutral-500 dark:text-neutral-400">Log transactions, configure budgets, and track assets.</p>
+    <div className="space-y-6 max-w-6xl mx-auto py-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="text-left">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Ledger Wealth</h1>
+          <p className="text-xs text-muted-foreground">
+            Track double-precision balance sheets, inflows, and outflows.
+          </p>
+        </div>
+        <Button variant="primary" size="sm" onClick={() => setIsOpen(true)} className="flex items-center gap-1.5 self-start">
+          <Plus size={14} />
+          <span>Log Transaction</span>
+        </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="p-6 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl flex items-center justify-between">
-          <div>
-            <p className="text-xs font-semibold text-neutral-500 tracking-wider uppercase">Net Balance</p>
-            <h2 className={`text-2xl font-bold mt-1 ${netBalance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}`}>
-              ${netBalance.toFixed(2)}
-            </h2>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card hoverEffect glass className="text-left space-y-2.5">
+          <div className="flex justify-between items-center text-muted-foreground">
+            <span className="text-xs font-semibold uppercase tracking-wider">Net Worth</span>
+            <DollarSign size={16} className="text-accent" />
           </div>
-          <div className="p-3 bg-violet-100 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400 rounded-full">
-            <Wallet size={20} />
-          </div>
-        </div>
+          <h2 className="text-3xl font-extrabold tracking-tight text-foreground">
+            ${getNetWorth().toLocaleString()}
+          </h2>
+          <p className="text-[10px] text-muted-foreground">Current calculated capital balance</p>
+        </Card>
 
-        <div className="p-6 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl flex items-center justify-between">
-          <div>
-            <p className="text-xs font-semibold text-neutral-500 tracking-wider uppercase">Total Inflows</p>
-            <h2 className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
-              +${totals.inflow.toFixed(2)}
-            </h2>
+        <Card hoverEffect glass className="text-left space-y-2.5">
+          <div className="flex justify-between items-center text-muted-foreground">
+            <span className="text-xs font-semibold uppercase tracking-wider">Total Inflow</span>
+            <TrendingUp size={16} className="text-emerald-500" />
           </div>
-          <div className="p-3 bg-emerald-100 dark:bg-emerald-950/40 text-emerald-650 dark:text-emerald-400 rounded-full">
-            <ArrowUpRight size={20} />
-          </div>
-        </div>
+          <h2 className="text-3xl font-extrabold tracking-tight text-emerald-500">
+            ${getInflows().toLocaleString()}
+          </h2>
+          <p className="text-[10px] text-muted-foreground">Active positive revenue channels</p>
+        </Card>
 
-        <div className="p-6 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl flex items-center justify-between">
-          <div>
-            <p className="text-xs font-semibold text-neutral-500 tracking-wider uppercase">Total Outflows</p>
-            <h2 className="text-2xl font-bold text-red-500 dark:text-red-400 mt-1">
-              -${totals.outflow.toFixed(2)}
-            </h2>
+        <Card hoverEffect glass className="text-left space-y-2.5">
+          <div className="flex justify-between items-center text-muted-foreground">
+            <span className="text-xs font-semibold uppercase tracking-wider">Total Outflow</span>
+            <TrendingDown size={16} className="text-red-500" />
           </div>
-          <div className="p-3 bg-red-100 dark:bg-red-950/40 text-red-650 dark:text-red-400 rounded-full">
-            <ArrowDownRight size={20} />
-          </div>
-        </div>
+          <h2 className="text-3xl font-extrabold tracking-tight text-red-500">
+            ${getOutflows().toLocaleString()}
+          </h2>
+          <p className="text-[10px] text-muted-foreground">Categorized wealth deductions</p>
+        </Card>
       </div>
 
-      <form onSubmit={handleAddTransaction} className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8 bg-neutral-50 dark:bg-neutral-900 p-4 rounded-xl border border-neutral-200 dark:border-neutral-800">
-        <input
-          type="text"
-          placeholder="Transaction details..."
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className="sm:col-span-2 bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 px-4 py-2.5 rounded-lg text-sm focus:outline-violet-500 text-neutral-800 dark:text-white"
-        />
-        <input
-          type="number"
-          step="0.01"
-          placeholder="Amount"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          className="bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 px-4 py-2.5 rounded-lg text-sm focus:outline-violet-500 text-neutral-800 dark:text-white"
-        />
-        <div className="flex gap-2">
-          <select
-            value={type}
-            onChange={(e) => setType(e.target.value as 'INFLOW' | 'OUTFLOW')}
-            className="flex-1 bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 px-3 py-2 rounded-lg text-xs font-semibold text-neutral-600 dark:text-neutral-400 focus:outline-none"
-          >
-            <option value="OUTFLOW">Outflow</option>
-            <option value="INFLOW">Inflow</option>
-          </select>
-          <button
-            type="submit"
-            className="flex items-center justify-center bg-violet-600 hover:bg-violet-750 text-white p-2.5 rounded-lg text-sm font-semibold transition cursor-pointer"
-          >
-            <Plus size={18} />
-          </button>
-        </div>
-      </form>
+      <Card className="text-left space-y-4">
+        <h3 className="text-sm font-semibold text-foreground tracking-tight border-b border-border/40 pb-2.5">
+          Transactions History
+        </h3>
 
-      <div className="space-y-3">
-        {transactions.map((t) => (
-          <div key={t.id} className="flex justify-between items-center p-4 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl">
-            <div>
-              <p className="text-sm font-semibold text-neutral-900 dark:text-white">{t.description}</p>
-              <p className="text-[10px] text-neutral-500">{t.date}</p>
+        <div className="divide-y divide-border/40 overflow-hidden">
+          <AnimatePresence>
+            {transactions.length > 0 ? (
+              transactions.map((tx) => (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  key={tx.id}
+                  className="py-3 flex items-center justify-between gap-4 group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`p-2 rounded-lg ${
+                        tx.type === 'INFLOW'
+                          ? 'bg-emerald-500/10 text-emerald-500'
+                          : 'bg-red-500/10 text-red-500'
+                      }`}
+                    >
+                      {tx.type === 'INFLOW' ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                    </div>
+                    <div className="space-y-0.5">
+                      <p className="text-xs font-semibold text-foreground">{tx.description || tx.category}</p>
+                      <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                        <span className="flex items-center gap-0.5">
+                          <Tag size={10} />
+                          {tx.category}
+                        </span>
+                        <span>•</span>
+                        <span>{tx.date}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3.5">
+                    <span
+                      className={`text-xs font-bold font-mono ${
+                        tx.type === 'INFLOW' ? 'text-emerald-500' : 'text-foreground'
+                      }`}
+                    >
+                      {tx.type === 'INFLOW' ? '+' : '-'}${tx.amount.toLocaleString()}
+                    </span>
+                    <button
+                      onClick={() => deleteTransaction(tx.id)}
+                      className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition p-0.5 rounded cursor-pointer"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                </motion.div>
+              ))
+            ) : (
+              <div className="text-center py-12 text-sm text-muted-foreground">
+                No ledger transactions logged yet
+              </div>
+            )}
+          </AnimatePresence>
+        </div>
+      </Card>
+
+      <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Log New Transaction">
+        <form onSubmit={handleCreateTransaction} className="space-y-4">
+          <Input
+            label="Amount ($)"
+            type="number"
+            step="0.01"
+            placeholder="0.00"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            required
+          />
+
+          <div className="space-y-1 text-left">
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Transaction Type
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setType('INFLOW')}
+                className={`py-2 rounded-lg text-xs font-semibold border transition cursor-pointer ${
+                  type === 'INFLOW'
+                    ? 'bg-emerald-500/10 border-emerald-500 text-emerald-500'
+                    : 'bg-card border-border text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Inflow
+              </button>
+              <button
+                type="button"
+                onClick={() => setType('OUTFLOW')}
+                className={`py-2 rounded-lg text-xs font-semibold border transition cursor-pointer ${
+                  type === 'OUTFLOW'
+                    ? 'bg-red-500/10 border-red-500 text-red-500'
+                    : 'bg-card border-border text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Outflow
+              </button>
             </div>
-            <div className={`text-sm font-bold ${t.type === 'INFLOW' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}`}>
-              {t.type === 'INFLOW' ? '+' : '-'}${t.amount.toFixed(2)}
-            </div>
           </div>
-        ))}
-      </div>
+
+          <Input
+            label="Category"
+            placeholder="e.g. Salary, Rent, Groceries"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            required
+          />
+
+          <Input
+            label="Description (Optional)"
+            placeholder="e.g. Spent on grocery run"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+
+          <div className="flex justify-end gap-2.5 pt-4">
+            <Button variant="outline" type="button" onClick={() => setIsOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" type="submit">
+              Log Transaction
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };

@@ -33,7 +33,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
   const commands = [
     { id: 'dash', label: 'Go to The Nexus Dashboard', icon: LayoutDashboard, action: () => setTab('dashboard') },
     { id: 'todo', label: 'Go to Chronos Tasks', icon: CheckSquare, action: () => setTab('tasks') },
-    { id: 'finance', label: 'Go to Ledger Finance', icon: Wallet, action: () => setTab('ledger') },
+    { id: 'finance', label: 'Go to Ledger Wealth', icon: Wallet, action: () => setTab('ledger') },
     { id: 'notes', label: 'Go to Athena Notes', icon: BookOpen, action: () => setTab('notebook') },
     { id: 'config', label: 'Go to Settings', icon: Settings, action: () => setTab('settings') },
     { id: 'theme', label: 'Toggle Light/Dark Theme', icon: Sun, action: () => toggleTheme() },
@@ -58,25 +58,25 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
-          transition={{ duration: 0.15 }}
-          className="relative w-full max-w-xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-2xl rounded-xl overflow-hidden flex flex-col"
+          transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+          className="relative w-full max-w-xl bg-card/80 border border-border shadow-apple-lg rounded-xl overflow-hidden flex flex-col glass z-10 p-2"
         >
-          <div className="flex items-center gap-3 px-4 py-3.5 border-b border-neutral-200 dark:border-neutral-800">
-            <Search className="text-neutral-400" size={18} />
+          <div className="flex items-center gap-3 px-4 py-3.5 border-b border-border/40">
+            <Search className="text-muted-foreground" size={18} />
             <input
               type="text"
               autoFocus
               placeholder="Type a command or search..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-transparent border-0 outline-none text-sm text-neutral-800 dark:text-neutral-100 placeholder-neutral-400"
+              className="w-full bg-transparent border-0 outline-none text-sm text-foreground placeholder-muted-foreground"
             />
-            <span className="text-[10px] bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded text-neutral-400 font-mono">
+            <span className="text-[10px] bg-secondary px-1.5 py-0.5 rounded text-muted-foreground font-mono">
               ESC
             </span>
           </div>
 
-          <div className="max-h-[300px] overflow-y-auto p-2">
+          <div className="max-h-[300px] overflow-y-auto p-1 space-y-0.5">
             {filteredCommands.length > 0 ? (
               filteredCommands.map((cmd) => {
                 const Icon = cmd.icon;
@@ -87,15 +87,15 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
                       cmd.action();
                       onClose();
                     }}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:text-neutral-950 dark:hover:text-white transition-all cursor-pointer"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-sm hover:bg-secondary text-muted-foreground hover:text-foreground transition-all cursor-pointer"
                   >
-                    <Icon size={16} className="text-neutral-400" />
+                    <Icon size={16} className="text-muted-foreground" />
                     <span>{cmd.label}</span>
                   </button>
                 );
               })
             ) : (
-              <div className="text-center py-8 text-sm text-neutral-400">
+              <div className="text-center py-8 text-sm text-muted-foreground">
                 No commands matching "{search}"
               </div>
             )}

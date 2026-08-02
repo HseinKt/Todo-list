@@ -6,6 +6,7 @@ interface User {
   email: string;
   fullName?: string;
   roles?: string[];
+  twoFactorEnabled?: boolean;
 }
 
 interface AuthContextType {
