@@ -29,23 +29,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [mfaUserId, setMfaUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    async function loadUser() {
+    function loadUser() {
       const token = localStorage.getItem('access_token');
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-      try {
-        // Just decode or fetch user details
-        const { data } = await api.get('/auth/me'); // We can add an endpoint or use token details
-        if (data.success) {
-          setUser(data.data);
+      const savedUser = localStorage.getItem('user');
+      if (token && savedUser) {
+        try {
+          setUser(JSON.parse(savedUser));
+        } catch (e) {
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('user');
         }
-      } catch (err) {
-        localStorage.removeItem('access_token');
-      } finally {
-        setLoading(false);
       }
+      setLoading(false);
     }
     loadUser();
   }, []);
@@ -62,6 +57,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { accessToken, refreshToken, user: loggedUser } = data.data;
     localStorage.setItem('access_token', accessToken);
     localStorage.setItem('refresh_token', refreshToken);
+    localStorage.setItem('user', JSON.stringify(loggedUser));
     setUser(loggedUser);
     return { require2FA: false };
   };
@@ -77,6 +73,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     localStorage.setItem('access_token', accessToken);
     localStorage.setItem('refresh_token', refreshToken);
+    localStorage.setItem('user', JSON.stringify(loggedUser));
     setUser(loggedUser);
     setRequire2Fa(false);
     setMfaUserId(null);
@@ -89,6 +86,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user');
     setUser(null);
   };
 

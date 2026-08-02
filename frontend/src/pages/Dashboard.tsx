@@ -1,9 +1,12 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Sparkles, Target, Flame, Calendar, Plus } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 
 export const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
+
   const getGreeting = () => {
     const hr = new Date().getHours();
     if (hr < 12) return 'Good morning';
@@ -22,7 +25,12 @@ export const Dashboard: React.FC = () => {
             Here is the status of your cognitive workspace for today.
           </p>
         </div>
-        <Button variant="primary" size="sm" className="flex items-center gap-1.5 self-start">
+        <Button
+          variant="primary"
+          size="sm"
+          onClick={() => navigate('/app/notebook')}
+          className="flex items-center gap-1.5 self-start"
+        >
           <Plus size={14} />
           <span>New Insight</span>
         </Button>
