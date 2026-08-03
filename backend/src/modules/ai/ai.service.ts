@@ -843,4 +843,63 @@ export class AiService {
       };
     }
   }
+
+  async getSmartReminderSchedule(userId: string) {
+    const ai = this.ensureAiClient();
+    const tasks = await this.prisma.task.findMany({
+      where: { userId, completed: false, deletedAt: null },
+      take: 5,
+    });
+
+    if (!ai) {
+      return {
+        peakFocusWindow: '09:00 AM - 12:00 PM',
+        quietHours: '01:00 PM - 03:00 PM',
+        optimizedReminders: [
+          { time: '09:00 AM', taskTitle: 'Morning Deep Work Kickoff', channel: 'Push Notification' },
+          { time: '04:30 PM', taskTitle: 'Daily Milestone Wrap-up', channel: 'In-App Toast' },
+        ],
+      };
+    }
+
+    const responseSchema: Schema = {
+      type: Type.OBJECT,
+      properties: {
+        peakFocusWindow: { type: Type.STRING },
+        quietHours: { type: Type.STRING },
+        optimizedReminders: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              time: { type: Type.STRING },
+              taskTitle: { type: Type.STRING },
+              channel: { type: Type.STRING },
+            },
+            required: ['time', 'taskTitle', 'channel'],
+          },
+        },
+      },
+      required: ['peakFocusWindow', 'quietHours', 'optimizedReminders'],
+    };
+
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: `Create a smart non-intrusive reminder schedule for active tasks to protect peak focus hours:\n${JSON.stringify(tasks)}`,
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema,
+        },
+      });
+
+      return JSON.parse(response.text || '{}');
+    } catch (err) {
+      return {
+        peakFocusWindow: '09:00 AM - 12:00 PM',
+        quietHours: '01:00 PM - 03:00 PM',
+        optimizedReminders: [],
+      };
+    }
+  }
 }

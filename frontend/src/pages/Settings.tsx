@@ -1,15 +1,26 @@
 import React, { useState } from 'react';
-import { Shield, Smartphone, User } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { Shield, Smartphone, User, Bell } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Modal } from '../components/ui/Modal';
 import { useAuth } from '../contexts/AuthContext';
+import { api } from '../lib/axios';
 
 export const Settings: React.FC = () => {
   const { user } = useAuth();
   const [isMfaModalOpen, setIsMfaModalOpen] = useState(false);
-  
+
+  const { data: reminderData } = useQuery({
+    queryKey: ['ai-smart-reminders'],
+    queryFn: async () => {
+      const { data } = await api.get('/ai/notifications/smart-reminders');
+      return data.data;
+    },
+    staleTime: 1000 * 60 * 10,
+  });
+
   const [name, setName] = useState(user?.fullName || '');
   const [email, setEmail] = useState(user?.email || '');
 
@@ -122,6 +133,47 @@ export const Settings: React.FC = () => {
               </div>
             )}
           </div>
+        </Card>
+
+        <Card className="text-left space-y-4" glass>
+          <div className="flex items-center gap-2 border-b border-border/40 pb-3">
+            <Bell size={18} className="text-accent" />
+            <h3 className="text-sm font-bold text-foreground">Smart AI Notification & Focus Window Optimizer</h3>
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            Gemini 2.5 Flash analyzes your daily focus hours and schedules non-intrusive notification reminders so your deep work blocks remain uninterrupted.
+          </p>
+
+          {reminderData && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+              <div className="p-3 rounded-xl bg-card/60 border border-border/40 space-y-1">
+                <span className="text-[10px] uppercase font-bold text-emerald-400">⚡ Peak Focus Window</span>
+                <p className="text-xs font-bold text-foreground">{reminderData.peakFocusWindow}</p>
+              </div>
+              <div className="p-3 rounded-xl bg-card/60 border border-border/40 space-y-1">
+                <span className="text-[10px] uppercase font-bold text-indigo-400">🌙 Quiet Focus Hours</span>
+                <p className="text-xs font-bold text-foreground">{reminderData.quietHours}</p>
+              </div>
+            </div>
+          )}
+
+          {reminderData?.optimizedReminders?.length > 0 && (
+            <div className="space-y-2 pt-2">
+              <span className="text-xs font-bold text-foreground">AI Scheduled Notification Slots:</span>
+              <div className="space-y-1.5">
+                {reminderData.optimizedReminders.map((r: any, idx: number) => (
+                  <div key={idx} className="p-2.5 bg-secondary/40 border border-border/30 rounded-lg text-xs flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-accent font-mono">{r.time}</span>
+                      <span className="text-foreground">{r.taskTitle}</span>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-primary/10 text-primary font-semibold">{r.channel}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </Card>
       </div>
 

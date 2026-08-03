@@ -96,4 +96,10 @@ export class AiController {
   async evaluateIdeaViability(@Body() dto: { ideaTitle: string; ideaDescription: string }) {
     return this.aiService.evaluateIdeaViability(dto);
   }
+
+  @Get('notifications/smart-reminders')
+  @ApiOperation({ summary: 'Calculate smart non-intrusive notification windows based on deep work hours' })
+  async getSmartReminderSchedule(@CurrentUser('id') userId: string) {
+    return this.aiService.getSmartReminderSchedule(userId);
+  }
 }
