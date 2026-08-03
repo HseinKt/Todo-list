@@ -19,7 +19,11 @@ export const useLedger = () => {
     queryKey: LEDGER_QUERY_KEY,
     queryFn: async () => {
       const { data } = await api.get('/budgets/transactions');
-      return data.data || [];
+      const items = data.data?.data || [];
+      return items.map((tx: any) => ({
+        ...tx,
+        amount: parseFloat(tx.amount) || 0,
+      }));
     },
   });
 

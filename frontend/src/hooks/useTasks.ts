@@ -19,7 +19,7 @@ export const useTasks = () => {
     queryKey: TASKS_QUERY_KEY,
     queryFn: async () => {
       const { data } = await api.get('/tasks');
-      return data.data || [];
+      return data.data?.data || [];
     },
   });
 
