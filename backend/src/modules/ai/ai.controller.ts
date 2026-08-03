@@ -60,4 +60,10 @@ export class AiController {
   async generateHabitPlan(@Body() dto: { habitGoal: string; daysPerWeek?: number }) {
     return this.aiService.generateHabitPlan(dto);
   }
+
+  @Post('notes/summarize-actions')
+  @ApiOperation({ summary: 'Summarize note content and extract actionable tasks' })
+  async summarizeNoteAndExtractActions(@Body() dto: { title: string; content: string }) {
+    return this.aiService.summarizeNoteAndExtractActions(dto);
+  }
 }

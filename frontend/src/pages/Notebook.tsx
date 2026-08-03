@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, BookOpen, Trash2, FileText, ChevronRight, AlertCircle, Sparkles, Search } from 'lucide-react';
+import { Plus, BookOpen, Trash2, FileText, ChevronRight, AlertCircle, Sparkles, Search, Check } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { useNotes } from '../hooks/useNotes';
+import { useTasks } from '../hooks/useTasks';
 import { api } from '../lib/axios';
 
 export const Notebook: React.FC = () => {
   const { notes, isLoading, error, createNote, updateNote, deleteNote } = useNotes();
+  const { createTask } = useTasks();
   const [activeNoteId, setActiveNoteId] = useState<string>('');
   
   const [title, setTitle] = useState('');
@@ -15,6 +17,11 @@ export const Notebook: React.FC = () => {
   const [aiCategory, setAiCategory] = useState('');
   const [aiTags, setAiTags] = useState<string[]>([]);
   const [aiCategorizing, setAiCategorizing] = useState(false);
+
+  const [aiSummary, setAiSummary] = useState('');
+  const [extractedTasks, setExtractedTasks] = useState<any[]>([]);
+  const [summarizing, setSummarizing] = useState(false);
+  const [pushedSuccess, setPushedSuccess] = useState(false);
 
   const handleAiCategorize = async () => {
     if (!title.trim()) return;
@@ -28,6 +35,34 @@ export const Notebook: React.FC = () => {
     } finally {
       setAiCategorizing(false);
     }
+  };
+
+  const handleSummarizeAndExtract = async () => {
+    if (!title.trim() || !content.trim()) return;
+    setSummarizing(true);
+    setPushedSuccess(false);
+    try {
+      const { data } = await api.post('/ai/notes/summarize-actions', { title, content });
+      setAiSummary(data.data?.summary || '');
+      setExtractedTasks(data.data?.actionTasks || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSummarizing(false);
+    }
+  };
+
+  const handlePushToChronos = () => {
+    extractedTasks.forEach((task: any) => {
+      createTask({
+        title: task.title,
+        description: `Extracted from note: "${title}"`,
+        priority: task.priority || 'MEDIUM',
+        status: 'TODO',
+        category: task.category || 'Extracted Action',
+      });
+    });
+    setPushedSuccess(true);
   };
 
   useEffect(() => {
@@ -178,13 +213,23 @@ export const Notebook: React.FC = () => {
                   className="bg-transparent border-0 outline-none text-base font-bold tracking-tight text-foreground placeholder-muted-foreground w-full"
                   placeholder="Note Title"
                 />
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleSummarizeAndExtract}
+                    disabled={summarizing}
+                    className="flex items-center gap-1.5 text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20"
+                  >
+                    <Sparkles size={13} className={summarizing ? 'animate-spin' : ''} />
+                    <span>{summarizing ? 'Analyzing...' : 'AI Summarize & Actions'}</span>
+                  </Button>
                   <Button
                     variant="secondary"
                     size="sm"
                     onClick={handleAiCategorize}
                     disabled={aiCategorizing}
-                    className="flex items-center gap-1.5 text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20"
+                    className="flex items-center gap-1.5 text-xs text-accent bg-accent/10 border border-accent/20"
                   >
                     <Sparkles size={13} className={aiCategorizing ? 'animate-spin' : ''} />
                     <span>{aiCategorizing ? 'Categorizing...' : 'AI Auto-Tag'}</span>
@@ -210,6 +255,43 @@ export const Notebook: React.FC = () => {
                       #{tag}
                     </span>
                   ))}
+                </div>
+              )}
+
+              {aiSummary && (
+                <div className="p-3 bg-gradient-to-r from-primary/10 to-transparent border border-primary/20 rounded-xl space-y-2 text-left">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-foreground">AI Executive Summary & Extracted Actions</span>
+                    {extractedTasks.length > 0 && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={handlePushToChronos}
+                        disabled={pushedSuccess}
+                        className="text-[11px] h-7 px-2.5 bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                      >
+                        {pushedSuccess ? (
+                          <>
+                            <Check size={12} />
+                            <span>Pushed to Chronos!</span>
+                          </>
+                        ) : (
+                          <span>➕ Push {extractedTasks.length} Actions to Chronos</span>
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">{aiSummary}</p>
+                  {extractedTasks.length > 0 && (
+                    <div className="grid grid-cols-1 gap-1.5 pt-1">
+                      {extractedTasks.map((t: any, idx: number) => (
+                        <div key={idx} className="p-2 bg-card/70 border border-border/40 rounded-lg text-xs flex justify-between items-center">
+                          <span className="font-medium text-foreground">{t.title}</span>
+                          <span className="text-[10px] px-2 py-0.5 rounded bg-accent/10 text-accent font-semibold">{t.priority}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 

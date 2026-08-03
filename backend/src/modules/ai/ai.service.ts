@@ -514,4 +514,59 @@ export class AiService {
       };
     }
   }
+
+  async summarizeNoteAndExtractActions(dto: { title: string; content: string }) {
+    const ai = this.ensureAiClient();
+
+    if (!ai || !dto.content) {
+      return {
+        summary: `Note summary for "${dto.title}".`,
+        actionTasks: [
+          {
+            title: `Review deliverables for ${dto.title}`,
+            priority: 'HIGH',
+            category: 'Action Items',
+          },
+        ],
+      };
+    }
+
+    const responseSchema: Schema = {
+      type: Type.OBJECT,
+      properties: {
+        summary: { type: Type.STRING },
+        actionTasks: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              title: { type: Type.STRING },
+              priority: { type: Type.STRING, enum: ['LOW', 'MEDIUM', 'HIGH'] },
+              category: { type: Type.STRING },
+            },
+            required: ['title', 'priority', 'category'],
+          },
+        },
+      },
+      required: ['summary', 'actionTasks'],
+    };
+
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: `Summarize the following note into a 2-sentence executive summary AND extract clear actionable tasks:\nTitle: ${dto.title}\nContent: ${dto.content}`,
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema,
+        },
+      });
+
+      return JSON.parse(response.text || '{}');
+    } catch (err) {
+      return {
+        summary: dto.title,
+        actionTasks: [{ title: `Follow up on ${dto.title}`, priority: 'MEDIUM', category: 'General' }],
+      };
+    }
+  }
 }
