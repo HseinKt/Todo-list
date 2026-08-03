@@ -12,6 +12,15 @@ export interface Transaction {
 
 const LEDGER_QUERY_KEY = ['transactions'];
 
+const mapDbTxToTransaction = (dbTx: any): Transaction => ({
+  id: dbTx.id,
+  amount: parseFloat(dbTx.amount) || 0,
+  type: dbTx.type || 'OUTFLOW',
+  category: dbTx.category?.name || 'General',
+  description: dbTx.description || dbTx.category?.name || 'Transaction',
+  date: dbTx.transactionDate ? new Date(dbTx.transactionDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+});
+
 export const useLedger = () => {
   const queryClient = useQueryClient();
 
@@ -20,17 +29,20 @@ export const useLedger = () => {
     queryFn: async () => {
       const { data } = await api.get('/budgets/transactions');
       const items = data.data?.data || [];
-      return items.map((tx: any) => ({
-        ...tx,
-        amount: parseFloat(tx.amount) || 0,
-      }));
+      return items.map(mapDbTxToTransaction);
     },
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes for instant page navigation
   });
 
   const createTransactionMutation = useMutation({
     mutationFn: async (newTx: Omit<Transaction, 'id' | 'date'>) => {
-      const { data } = await api.post('/budgets/transactions', newTx);
-      return data.data;
+      const payload = {
+        amount: newTx.amount,
+        type: newTx.type,
+        description: newTx.description || newTx.category || 'General Transaction',
+      };
+      const { data } = await api.post('/budgets/transactions', payload);
+      return mapDbTxToTransaction(data.data.transaction || data.data);
     },
     onMutate: async (newTx) => {
       await queryClient.cancelQueries({ queryKey: LEDGER_QUERY_KEY });

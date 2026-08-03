@@ -21,6 +21,7 @@ export const useNotes = () => {
       const { data } = await api.get('/notes');
       return data.data || [];
     },
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes for instant page navigation
   });
 
   const createNoteMutation = useMutation({

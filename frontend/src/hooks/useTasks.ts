@@ -31,6 +31,7 @@ export const useTasks = () => {
       const items = data.data?.data || [];
       return items.map(mapDbTaskToTask);
     },
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes for instant page navigation
   });
 
   const createTaskMutation = useMutation({
