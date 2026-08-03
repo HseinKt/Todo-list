@@ -37,6 +37,15 @@ export const Ledger: React.FC = () => {
     staleTime: 1000 * 60 * 10,
   });
 
+  const { data: leakData } = useQuery({
+    queryKey: ['ai-finance-leaks'],
+    queryFn: async () => {
+      const { data } = await api.get('/ai/finance/leaks');
+      return data.data;
+    },
+    staleTime: 1000 * 60 * 10,
+  });
+
   const {
     register,
     handleSubmit,
@@ -156,6 +165,34 @@ export const Ledger: React.FC = () => {
               ))}
             </div>
           )}
+        </Card>
+      )}
+
+      {leakData && leakData.detectedLeaks?.length > 0 && (
+        <Card glass className="p-4 bg-gradient-to-r from-red-500/10 via-amber-500/5 to-transparent border-red-500/20 text-left space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <AlertCircle size={18} className="text-red-400" />
+              <h3 className="text-sm font-bold text-foreground">AI Subscription Leak & Recurring Bill Detector</h3>
+            </div>
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-muted-foreground">Est. Annual Savings:</span>
+              <span className="font-bold text-emerald-500">${leakData.potentialAnnualSavings}/yr</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {leakData.detectedLeaks.map((leak: any, idx: number) => (
+              <div key={idx} className="p-3 bg-card/70 border border-border/50 rounded-xl space-y-1 text-xs">
+                <div className="flex justify-between items-center">
+                  <span className="font-bold text-foreground">{leak.vendor}</span>
+                  <span className="font-bold text-red-400">${leak.amount}/mo</span>
+                </div>
+                <p className="text-[11px] text-muted-foreground">{leak.riskReason}</p>
+                <p className="text-[10px] text-amber-400 font-semibold">💡 Action Tip: {leak.actionTip}</p>
+              </div>
+            ))}
+          </div>
         </Card>
       )}
 

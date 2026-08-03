@@ -48,4 +48,10 @@ export class AiController {
   ) {
     return this.aiService.generateExecutiveReview(userId, period || 'WEEKLY');
   }
+
+  @Get('finance/leaks')
+  @ApiOperation({ summary: 'Scan transactions for recurring subscription leaks and potential savings' })
+  async detectSubscriptionLeaks(@CurrentUser('id') userId: string) {
+    return this.aiService.detectSubscriptionLeaks(userId);
+  }
 }
