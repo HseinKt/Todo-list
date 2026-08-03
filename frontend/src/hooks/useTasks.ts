@@ -12,6 +12,15 @@ export interface Task {
 
 const TASKS_QUERY_KEY = ['tasks'];
 
+const mapDbTaskToTask = (dbTask: any): Task => ({
+  id: dbTask.id,
+  title: dbTask.text || dbTask.title || 'Untitled Task',
+  description: dbTask.description || '',
+  status: dbTask.completed ? 'COMPLETED' : dbTask.status || 'TODO',
+  priority: (dbTask.priority as any) || 'MEDIUM',
+  category: dbTask.category?.name || dbTask.category || 'General',
+});
+
 export const useTasks = () => {
   const queryClient = useQueryClient();
 
@@ -19,14 +28,20 @@ export const useTasks = () => {
     queryKey: TASKS_QUERY_KEY,
     queryFn: async () => {
       const { data } = await api.get('/tasks');
-      return data.data?.data || [];
+      const items = data.data?.data || [];
+      return items.map(mapDbTaskToTask);
     },
   });
 
   const createTaskMutation = useMutation({
     mutationFn: async (newTask: Omit<Task, 'id'>) => {
-      const { data } = await api.post('/tasks', newTask);
-      return data.data;
+      const payload = {
+        text: newTask.title,
+        description: newTask.description,
+        priority: newTask.priority,
+      };
+      const { data } = await api.post('/tasks', payload);
+      return mapDbTaskToTask(data.data);
     },
     onMutate: async (newTask) => {
       await queryClient.cancelQueries({ queryKey: TASKS_QUERY_KEY });
@@ -55,9 +70,15 @@ export const useTasks = () => {
   });
 
   const updateTaskMutation = useMutation({
-    mutationFn: async ({ id, ...updates }: Partial<Task> & { id: string }) => {
-      const { data } = await api.patch(`/tasks/${id}`, updates);
-      return data.data;
+    mutationFn: async ({ id, status, title, ...updates }: Partial<Task> & { id: string }) => {
+      const payload: any = {};
+      if (title) payload.text = title;
+      if (status !== undefined) payload.completed = status === 'COMPLETED';
+      if (updates.description) payload.description = updates.description;
+      if (updates.priority) payload.priority = updates.priority;
+
+      const { data } = await api.patch(`/tasks/${id}`, payload);
+      return mapDbTaskToTask(data.data);
     },
     onMutate: async (updatedTask) => {
       await queryClient.cancelQueries({ queryKey: TASKS_QUERY_KEY });
