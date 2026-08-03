@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/axios';
+import { mapDbTaskToTask, mapDbTxToTransaction } from '../lib/mappers';
 
 interface User {
   id: string;
@@ -68,14 +69,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         queryKey: ['tasks'],
         queryFn: async () => {
           const { data } = await api.get('/tasks');
-          return data.data?.data || [];
+          const items = data.data?.data || [];
+          return items.map(mapDbTaskToTask);
         },
       }),
       queryClient.prefetchQuery({
         queryKey: ['transactions'],
         queryFn: async () => {
           const { data } = await api.get('/budgets/transactions');
-          return data.data?.data || [];
+          const items = data.data?.data || [];
+          return items.map(mapDbTxToTransaction);
         },
       }),
       queryClient.prefetchQuery({

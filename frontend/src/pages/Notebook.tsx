@@ -69,7 +69,7 @@ export const Notebook: React.FC = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto py-6 h-[calc(100vh-100px)] flex flex-col space-y-6">
+    <div className="w-full max-w-[1600px] mx-auto py-2 h-[calc(100vh-80px)] flex flex-col space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-left">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Athena Notebook</h1>

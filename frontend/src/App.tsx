@@ -30,7 +30,7 @@ const MainLayout: React.FC = () => {
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-background text-foreground">
       <Sidebar currentTab={currentTab} setTab={handleSetTab} />
-      <div className="flex-1 flex flex-col overflow-y-auto p-8 relative">
+      <div className="flex-1 flex flex-col overflow-y-auto p-6 md:p-8 relative">
         <Outlet />
       </div>
 

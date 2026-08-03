@@ -15,7 +15,7 @@ export const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto py-6">
+    <div className="space-y-8 w-full max-w-[1600px] mx-auto py-2">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">

@@ -1,25 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/axios';
+import { type Task, mapDbTaskToTask } from '../lib/mappers';
 
-export interface Task {
-  id: string;
-  title: string;
-  description?: string;
-  status: 'TODO' | 'IN_PROGRESS' | 'COMPLETED';
-  priority: 'LOW' | 'MEDIUM' | 'HIGH';
-  category?: string;
-}
+export type { Task };
 
 const TASKS_QUERY_KEY = ['tasks'];
-
-const mapDbTaskToTask = (dbTask: any): Task => ({
-  id: dbTask.id,
-  title: dbTask.text || dbTask.title || 'Untitled Task',
-  description: dbTask.description || '',
-  status: dbTask.completed ? 'COMPLETED' : dbTask.status || 'TODO',
-  priority: (dbTask.priority as any) || 'MEDIUM',
-  category: dbTask.category?.name || dbTask.category || 'General',
-});
 
 export const useTasks = () => {
   const queryClient = useQueryClient();
