@@ -646,4 +646,67 @@ export class AiService {
       };
     }
   }
+
+  async predictNetWorthGrowth(userId: string) {
+    const ai = this.ensureAiClient();
+    const transactions = await this.prisma.transaction.findMany({
+      where: { userId, deletedAt: null },
+      orderBy: { transactionDate: 'desc' },
+      take: 50,
+    });
+
+    let totalInflow = 0;
+    let totalOutflow = 0;
+    transactions.forEach((t) => {
+      const amt = Number(t.amount);
+      if (t.type === 'INFLOW') totalInflow += amt;
+      if (t.type === 'OUTFLOW') totalOutflow += amt;
+    });
+
+    const netBalance = totalInflow - totalOutflow;
+    const monthlySavingsRate = Math.max(0, netBalance * 0.4);
+
+    if (!ai) {
+      return {
+        currentNetWorth: netBalance,
+        projected3Months: netBalance + monthlySavingsRate * 3,
+        projected6Months: netBalance + monthlySavingsRate * 6,
+        projected12Months: netBalance + monthlySavingsRate * 12,
+        trajectorySummary: `Based on your cash flow, your capital is projected to grow by $${(monthlySavingsRate * 12).toFixed(2)} over the next 12 months.`,
+      };
+    }
+
+    const responseSchema: Schema = {
+      type: Type.OBJECT,
+      properties: {
+        currentNetWorth: { type: Type.NUMBER },
+        projected3Months: { type: Type.NUMBER },
+        projected6Months: { type: Type.NUMBER },
+        projected12Months: { type: Type.NUMBER },
+        trajectorySummary: { type: Type.STRING },
+      },
+      required: ['currentNetWorth', 'projected3Months', 'projected6Months', 'projected12Months', 'trajectorySummary'],
+    };
+
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: `Based on total inflows ($${totalInflow}) and total outflows ($${totalOutflow}), predict net worth capital in 3 months, 6 months, and 12 months:`,
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema,
+        },
+      });
+
+      return JSON.parse(response.text || '{}');
+    } catch (err) {
+      return {
+        currentNetWorth: netBalance,
+        projected3Months: netBalance,
+        projected6Months: netBalance,
+        projected12Months: netBalance,
+        trajectorySummary: 'Maintain positive net cash flow to accelerate capital growth.',
+      };
+    }
+  }
 }

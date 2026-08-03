@@ -72,4 +72,10 @@ export class AiController {
   async prioritizeTasksWithEisenhower(@CurrentUser('id') userId: string) {
     return this.aiService.prioritizeTasksWithEisenhower(userId);
   }
+
+  @Get('finance/predict-growth')
+  @ApiOperation({ summary: 'Forecast net worth capital growth over 3, 6, and 12 months based on cash flow' })
+  async predictNetWorthGrowth(@CurrentUser('id') userId: string) {
+    return this.aiService.predictNetWorthGrowth(userId);
+  }
 }

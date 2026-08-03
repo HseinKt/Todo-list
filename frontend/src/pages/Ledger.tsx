@@ -46,6 +46,15 @@ export const Ledger: React.FC = () => {
     staleTime: 1000 * 60 * 10,
   });
 
+  const { data: growthData } = useQuery({
+    queryKey: ['ai-finance-predict-growth'],
+    queryFn: async () => {
+      const { data } = await api.get('/ai/finance/predict-growth');
+      return data.data;
+    },
+    staleTime: 1000 * 60 * 10,
+  });
+
   const {
     register,
     handleSubmit,
@@ -192,6 +201,37 @@ export const Ledger: React.FC = () => {
                 <p className="text-[10px] text-amber-400 font-semibold">💡 Action Tip: {leak.actionTip}</p>
               </div>
             ))}
+          </div>
+        </Card>
+      )}
+
+      {growthData && (
+        <Card glass className="p-4 bg-gradient-to-r from-emerald-500/10 via-primary/5 to-transparent border-emerald-500/20 text-left space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <TrendingUp size={18} className="text-emerald-400" />
+              <h3 className="text-sm font-bold text-foreground">AI Net Worth & Capital Growth Predictor</h3>
+            </div>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-xs font-semibold">
+              <span>Current Capital: ${growthData.currentNetWorth}</span>
+            </div>
+          </div>
+
+          <p className="text-xs text-muted-foreground">{growthData.trajectorySummary}</p>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+            <div className="p-3 rounded-xl bg-card/70 border border-border/40 text-center space-y-1">
+              <span className="text-[10px] uppercase font-bold text-muted-foreground">3-Month Forecast</span>
+              <p className="text-sm font-bold text-emerald-400">${growthData.projected3Months}</p>
+            </div>
+            <div className="p-3 rounded-xl bg-card/70 border border-border/40 text-center space-y-1">
+              <span className="text-[10px] uppercase font-bold text-muted-foreground">6-Month Forecast</span>
+              <p className="text-sm font-bold text-emerald-400">${growthData.projected6Months}</p>
+            </div>
+            <div className="p-3 rounded-xl bg-card/70 border border-border/40 text-center space-y-1">
+              <span className="text-[10px] uppercase font-bold text-muted-foreground">12-Month Forecast</span>
+              <p className="text-sm font-bold text-emerald-400">${growthData.projected12Months}</p>
+            </div>
           </div>
         </Card>
       )}
