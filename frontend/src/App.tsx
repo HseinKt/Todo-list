@@ -9,6 +9,7 @@ import { ToastProvider } from './components/ui/Toast';
 import { Sidebar } from './components/Sidebar';
 import { CommandPalette } from './components/CommandPalette';
 import { AIChatWidget } from './components/ui/AIChatWidget';
+import { QuickCaptureModal } from './components/ui/QuickCaptureModal';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Landing } from './pages/Landing';
 import { Dashboard } from './pages/Dashboard';
@@ -20,6 +21,7 @@ import { Login } from './pages/Login';
 
 const MainLayout: React.FC = () => {
   const [isCommandOpen, setIsCommandOpen] = useState(false);
+  const [isQuickCaptureOpen, setIsQuickCaptureOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleSetTab = (tab: string) => {
@@ -41,6 +43,19 @@ const MainLayout: React.FC = () => {
         setTab={handleSetTab}
       />
       <AIChatWidget />
+
+      <button
+        onClick={() => setIsQuickCaptureOpen(true)}
+        className="fixed bottom-6 left-6 z-50 p-3 rounded-full bg-accent text-white shadow-xl hover:scale-105 transition cursor-pointer flex items-center gap-1.5 font-bold text-xs"
+        title="Quick Capture (Alt + Q)"
+      >
+        <span>⚡ Quick Capture</span>
+      </button>
+
+      <QuickCaptureModal
+        isOpen={isQuickCaptureOpen}
+        onClose={() => setIsQuickCaptureOpen(false)}
+      />
     </div>
   );
 };

@@ -9,6 +9,7 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { Input } from '../components/ui/Input';
+import { GoalHierarchyModal } from '../components/ui/GoalHierarchyModal';
 import { useTasks } from '../hooks/useTasks';
 import { api } from '../lib/axios';
 
@@ -27,6 +28,8 @@ export const Chronos: React.FC = () => {
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [aiGoal, setAiGoal] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
+
+  const [isGoalPathwayOpen, setIsGoalPathwayOpen] = useState(false);
 
   const [isTimeBlockOpen, setIsTimeBlockOpen] = useState(false);
 
@@ -159,6 +162,15 @@ export const Chronos: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center gap-2 self-start flex-wrap">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setIsGoalPathwayOpen(true)}
+            className="flex items-center gap-1.5 border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary font-medium"
+          >
+            <Target size={14} className="text-amber-500" />
+            <span>Goal Pathway Breakdown</span>
+          </Button>
           <Button
             variant="secondary"
             size="sm"
@@ -595,6 +607,11 @@ export const Chronos: React.FC = () => {
           </div>
         </div>
       </Modal>
+
+      <GoalHierarchyModal
+        isOpen={isGoalPathwayOpen}
+        onClose={() => setIsGoalPathwayOpen(false)}
+      />
     </div>
   );
 };

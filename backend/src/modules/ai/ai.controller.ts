@@ -102,4 +102,19 @@ export class AiController {
   async getSmartReminderSchedule(@CurrentUser('id') userId: string) {
     return this.aiService.getSmartReminderSchedule(userId);
   }
+
+  @Get('nexus-briefing')
+  @ApiOperation({ summary: 'Aggregate 100% real user data for Nexus Dashboard briefing, quote, and stats' })
+  async getNexusBriefing(@CurrentUser('id') userId: string) {
+    return this.aiService.getNexusBriefing(userId);
+  }
+
+  @Post('quick-capture')
+  @ApiOperation({ summary: 'Instantly capture raw thought/idea in under 3s into Task, Note, or Expense' })
+  async quickCapture(
+    @CurrentUser('id') userId: string,
+    @Body() dto: { rawInput: string; type?: 'TASK' | 'NOTE' | 'EXPENSE' | 'AUTO' },
+  ) {
+    return this.aiService.quickCapture(userId, dto);
+  }
 }

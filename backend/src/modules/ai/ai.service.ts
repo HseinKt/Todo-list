@@ -902,4 +902,119 @@ export class AiService {
       };
     }
   }
+
+  async getNexusBriefing(userId: string) {
+    const ai = this.ensureAiClient();
+
+    const [tasks, transactions, notes] = await Promise.all([
+      this.prisma.task.findMany({ where: { userId, deletedAt: null }, orderBy: { createdAt: 'desc' } }),
+      this.prisma.transaction.findMany({ where: { userId, deletedAt: null }, orderBy: { transactionDate: 'desc' } }),
+      this.prisma.note.findMany({ where: { userId, deletedAt: null }, orderBy: { updatedAt: 'desc' } }),
+    ]);
+
+    const pendingTasks = tasks.filter((t) => !t.completed);
+    const completedTasks = tasks.filter((t) => t.completed);
+    const totalTasksCount = tasks.length;
+    const productivityScore = totalTasksCount > 0 ? Math.round((completedTasks.length / totalTasksCount) * 100) : 100;
+
+    let totalInflow = 0;
+    let totalOutflow = 0;
+    transactions.forEach((t) => {
+      const amt = Number(t.amount);
+      if (t.type === 'INFLOW') totalInflow += amt;
+      if (t.type === 'OUTFLOW') totalOutflow += amt;
+    });
+    const currentBalance = totalInflow - totalOutflow;
+
+    const summaryContext = {
+      pendingTasksCount: pendingTasks.length,
+      completedTasksCount: completedTasks.length,
+      productivityScore,
+      currentBalance,
+      notesCount: notes.length,
+    };
+
+    let quote = 'The secret of getting ahead is getting started.';
+    let aiRecommendation = 'Focus on completing your top priority task today to build momentum.';
+
+    if (ai) {
+      try {
+        const responseSchema: Schema = {
+          type: Type.OBJECT,
+          properties: {
+            quote: { type: Type.STRING },
+            aiRecommendation: { type: Type.STRING },
+          },
+          required: ['quote', 'aiRecommendation'],
+        };
+        const response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: `Given this user summary context:\n${JSON.stringify(summaryContext)}\nGenerate an inspiring 1-sentence daily motivational quote and 1 strategic focus recommendation:`,
+          config: { responseMimeType: 'application/json', responseSchema },
+        });
+        const parsed = JSON.parse(response.text || '{}');
+        if (parsed.quote) quote = parsed.quote;
+        if (parsed.aiRecommendation) aiRecommendation = parsed.aiRecommendation;
+      } catch (e) {
+        // Fallback intact
+      }
+    }
+
+    return {
+      productivityScore,
+      pendingTasksCount: pendingTasks.length,
+      completedTasksCount: completedTasks.length,
+      totalNotesCount: notes.length,
+      currentBalance,
+      totalInflow,
+      totalOutflow,
+      todayTasks: pendingTasks.slice(0, 5).map((t) => ({ id: t.id, title: t.text, priority: t.priority })),
+      recentNotes: notes.slice(0, 4).map((n) => ({ id: n.id, title: n.title, content: n.content, updatedAt: n.updatedAt })),
+      quote,
+      aiRecommendation,
+    };
+  }
+
+  async quickCapture(userId: string, dto: { rawInput: string; type?: 'TASK' | 'NOTE' | 'EXPENSE' | 'AUTO' }) {
+    const text = dto.rawInput.trim();
+    if (!text) return { success: false, message: 'Empty input' };
+
+    const type = dto.type || 'AUTO';
+
+    if (type === 'TASK' || (type === 'AUTO' && (text.toLowerCase().startsWith('todo') || text.toLowerCase().includes('task') || text.length < 50))) {
+      const task = await this.prisma.task.create({
+        data: {
+          userId,
+          text,
+          priority: 'MEDIUM',
+          status: 'TODO',
+        },
+      });
+      return { success: true, createdType: 'TASK', data: task };
+    }
+
+    if (type === 'EXPENSE' || (type === 'AUTO' && (text.includes('$') || text.toLowerCase().includes('spent') || text.toLowerCase().includes('bought')))) {
+      const amountMatch = text.match(/\$?(\d+(\.\d+)?)/);
+      const amount = amountMatch ? parseFloat(amountMatch[1]) : 10;
+      const transaction = await this.prisma.transaction.create({
+        data: {
+          userId,
+          amount,
+          type: 'OUTFLOW',
+          description: text,
+          transactionDate: new Date(),
+        },
+      });
+      return { success: true, createdType: 'EXPENSE', data: transaction };
+    }
+
+    const note = await this.prisma.note.create({
+      data: {
+        userId,
+        title: text.slice(0, 30) + (text.length > 30 ? '...' : ''),
+        content: text,
+      },
+    });
+    return { success: true, createdType: 'NOTE', data: note };
+  }
 }
