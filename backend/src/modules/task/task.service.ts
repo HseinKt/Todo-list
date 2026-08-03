@@ -27,6 +27,7 @@ export class TaskService {
         userId,
         text: dto.text,
         description: dto.description || null,
+        status: dto.status || 'TODO',
         priority: dto.priority || 'MEDIUM',
         dueDate: dto.dueDate ? new Date(dto.dueDate) : null,
         todoListId: dto.todoListId || null,
@@ -60,17 +61,20 @@ export class TaskService {
     const undoing = dto.completed === false && task.completed;
 
     return this.prisma.$transaction(async (tx) => {
+      const isCompleted = dto.status ? dto.status === 'COMPLETED' : dto.completed;
+
       const updatedTask = await tx.task.update({
         where: { id },
         data: {
           text: dto.text,
           description: dto.description,
+          status: dto.status,
           priority: dto.priority,
           dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
           todoListId: dto.todoListId,
           categoryId: dto.categoryId,
           projectId: dto.projectId,
-          completed: dto.completed,
+          completed: isCompleted,
         },
       });
 

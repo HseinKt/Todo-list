@@ -17,6 +17,11 @@ export class UpdateTaskDto {
   @IsOptional()
   priority?: string;
 
+  @ApiPropertyOptional({ enum: ['TODO', 'IN_PROGRESS', 'COMPLETED'] })
+  @IsEnum(['TODO', 'IN_PROGRESS', 'COMPLETED'])
+  @IsOptional()
+  status?: string;
+
   @ApiPropertyOptional()
   @IsDateString()
   @IsOptional()

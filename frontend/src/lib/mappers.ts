@@ -20,7 +20,7 @@ export const mapDbTaskToTask = (dbTask: any): Task => ({
   id: dbTask.id,
   title: dbTask.text || dbTask.title || 'Untitled Task',
   description: dbTask.description || '',
-  status: dbTask.completed ? 'COMPLETED' : dbTask.status || 'TODO',
+  status: dbTask.status || (dbTask.completed ? 'COMPLETED' : 'TODO'),
   priority: (dbTask.priority as any) || 'MEDIUM',
   category: dbTask.category?.name || dbTask.category || 'General',
 });

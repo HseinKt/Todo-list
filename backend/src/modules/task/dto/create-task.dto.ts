@@ -17,6 +17,11 @@ export class CreateTaskDto {
   @IsOptional()
   priority?: string = 'MEDIUM';
 
+  @ApiPropertyOptional({ enum: ['TODO', 'IN_PROGRESS', 'COMPLETED'], default: 'TODO' })
+  @IsEnum(['TODO', 'IN_PROGRESS', 'COMPLETED'], { message: 'Status must be TODO, IN_PROGRESS, or COMPLETED' })
+  @IsOptional()
+  status?: string = 'TODO';
+
   @ApiPropertyOptional({ example: '2026-08-01T12:00:00.000Z' })
   @IsDateString()
   @IsOptional()

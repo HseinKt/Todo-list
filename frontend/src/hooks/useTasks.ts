@@ -59,7 +59,10 @@ export const useTasks = () => {
     mutationFn: async ({ id, status, title, ...updates }: Partial<Task> & { id: string }) => {
       const payload: any = {};
       if (title) payload.text = title;
-      if (status !== undefined) payload.completed = status === 'COMPLETED';
+      if (status !== undefined) {
+        payload.status = status;
+        payload.completed = status === 'COMPLETED';
+      }
       if (updates.description) payload.description = updates.description;
       if (updates.priority) payload.priority = updates.priority;
 

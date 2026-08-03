@@ -210,6 +210,7 @@ model Task {
   projectId   String?       @db.Uuid
   text        String
   description String?
+  status      String        @default("TODO") // "TODO", "IN_PROGRESS", "COMPLETED"
   completed   Boolean       @default(false)
   dueDate     DateTime?
   priority    String        @default("MEDIUM") // "LOW", "MEDIUM", "HIGH"
