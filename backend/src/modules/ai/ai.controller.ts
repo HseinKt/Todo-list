@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get } from '@nestjs/common';
+import { Controller, Post, Body, Get, Query } from '@nestjs/common';
 import { AiService } from './ai.service';
 import { DecomposeGoalDto } from './dto/decompose-goal.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -38,5 +38,14 @@ export class AiController {
   @ApiOperation({ summary: 'Calculate real-time user Energy Index and Burnout Risk Guard metrics' })
   async getBurnoutRisk(@CurrentUser('id') userId: string) {
     return this.aiService.calculateBurnoutRisk(userId);
+  }
+
+  @Get('executive-review')
+  @ApiOperation({ summary: 'Generate AI Executive Retrospective Briefing (Weekly, Monthly, Yearly)' })
+  async getExecutiveReview(
+    @CurrentUser('id') userId: string,
+    @Query('period') period?: 'WEEKLY' | 'MONTHLY' | 'YEARLY',
+  ) {
+    return this.aiService.generateExecutiveReview(userId, period || 'WEEKLY');
   }
 }

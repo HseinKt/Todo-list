@@ -1,13 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Sparkles, Target, Flame, Calendar, Plus, Zap } from 'lucide-react';
+import { Sparkles, Target, Flame, Calendar, Plus, Zap, Check, TrendingUp, BarChart3 } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
+import { Modal } from '../components/ui/Modal';
 import { api } from '../lib/axios';
 
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
+  const [reviewPeriod, setReviewPeriod] = useState<'WEEKLY' | 'MONTHLY' | 'YEARLY'>('WEEKLY');
 
   const { data: burnoutData } = useQuery({
     queryKey: ['burnout-risk'],
@@ -16,6 +19,16 @@ export const Dashboard: React.FC = () => {
       return data.data;
     },
     staleTime: 1000 * 60 * 5,
+  });
+
+  const { data: reviewData, isLoading: reviewLoading } = useQuery({
+    queryKey: ['executive-review', reviewPeriod],
+    queryFn: async () => {
+      const { data } = await api.get(`/ai/executive-review?period=${reviewPeriod}`);
+      return data.data;
+    },
+    enabled: isReviewOpen,
+    staleTime: 1000 * 60 * 10,
   });
 
   const getGreeting = () => {
@@ -36,15 +49,26 @@ export const Dashboard: React.FC = () => {
             Here is the status of your cognitive workspace for today.
           </p>
         </div>
-        <Button
-          variant="primary"
-          size="sm"
-          onClick={() => navigate('/app/notebook')}
-          className="flex items-center gap-1.5 self-start"
-        >
-          <Plus size={14} />
-          <span>New Insight</span>
-        </Button>
+        <div className="flex items-center gap-2 self-start">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setIsReviewOpen(true)}
+            className="flex items-center gap-1.5 border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary font-medium"
+          >
+            <BarChart3 size={14} className="text-amber-500 animate-pulse" />
+            <span>Executive AI Briefing</span>
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => navigate('/app/notebook')}
+            className="flex items-center gap-1.5"
+          >
+            <Plus size={14} />
+            <span>New Insight</span>
+          </Button>
+        </div>
       </div>
 
       <Card className="bg-gradient-to-r from-accent/5 via-accent/10 to-indigo-500/5 border-accent/20 relative overflow-hidden" glass>
@@ -195,6 +219,90 @@ export const Dashboard: React.FC = () => {
           </div>
         </Card>
       </div>
+
+      <Modal isOpen={isReviewOpen} onClose={() => setIsReviewOpen(false)} title="👔 Executive AI Retrospective Briefing">
+        <div className="space-y-5">
+          <div className="flex items-center justify-between border-b border-border/40 pb-3">
+            <div className="flex items-center gap-1.5 p-1 bg-secondary/50 rounded-lg">
+              {(['WEEKLY', 'MONTHLY', 'YEARLY'] as const).map((period) => (
+                <button
+                  key={period}
+                  onClick={() => setReviewPeriod(period)}
+                  className={`px-3 py-1 rounded-md text-xs font-semibold transition cursor-pointer ${
+                    reviewPeriod === period ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {period}
+                </button>
+              ))}
+            </div>
+
+            {reviewData && (
+              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-xs font-bold">
+                <span>Productivity Index: {reviewData.productivityScore}/100</span>
+              </div>
+            )}
+          </div>
+
+          {reviewLoading ? (
+            <div className="py-12 flex flex-col items-center justify-center space-y-3 text-muted-foreground">
+              <Sparkles size={24} className="animate-spin text-amber-400" />
+              <span className="text-xs font-medium">Generating executive retrospective briefing with Gemini 2.5 Flash...</span>
+            </div>
+          ) : reviewData ? (
+            <div className="space-y-4 text-left">
+              <div className="p-4 rounded-xl bg-card/60 border border-border/40 space-y-1.5">
+                <h4 className="text-xs font-bold text-accent uppercase tracking-wider">Executive Overview</h4>
+                <p className="text-xs leading-relaxed text-foreground/90">{reviewData.executiveSummary}</p>
+              </div>
+
+              {reviewData.keyAccomplishments?.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">Key Milestones & Wins</h4>
+                  <div className="grid grid-cols-1 gap-2">
+                    {reviewData.keyAccomplishments.map((win: string, idx: number) => (
+                      <div key={idx} className="flex items-start gap-2.5 p-2.5 rounded-lg bg-emerald-500/5 border border-emerald-500/15 text-xs text-foreground/90">
+                        <Check size={14} className="text-emerald-500 shrink-0 mt-0.5" />
+                        <span>{win}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {reviewData.financialTrend && (
+                <div className="p-3.5 rounded-xl bg-secondary/30 border border-border/40 space-y-1 text-xs">
+                  <div className="flex items-center gap-2 text-foreground font-semibold">
+                    <TrendingUp size={14} className="text-emerald-500" />
+                    <span>Capital & Financial Trajectory</span>
+                  </div>
+                  <p className="text-muted-foreground text-[11px]">{reviewData.financialTrend}</p>
+                </div>
+              )}
+
+              {reviewData.growthAreas?.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">Strategic Next Pacing</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {reviewData.growthAreas.map((area: string, idx: number) => (
+                      <div key={idx} className="p-2.5 rounded-lg bg-accent/5 border border-accent/15 text-xs text-foreground/90 flex items-start gap-2">
+                        <span className="text-amber-400 font-bold">•</span>
+                        <span>{area}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : null}
+
+          <div className="flex justify-end pt-3 border-t border-border/40">
+            <Button variant="outline" size="sm" onClick={() => setIsReviewOpen(false)}>
+              Close Briefing
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
