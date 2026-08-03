@@ -54,4 +54,10 @@ export class AiController {
   async detectSubscriptionLeaks(@CurrentUser('id') userId: string) {
     return this.aiService.detectSubscriptionLeaks(userId);
   }
+
+  @Post('planner/habit-plan')
+  @ApiOperation({ summary: 'Generate recurring micro-habit schedule for study, workout, or reading goals' })
+  async generateHabitPlan(@Body() dto: { habitGoal: string; daysPerWeek?: number }) {
+    return this.aiService.generateHabitPlan(dto);
+  }
 }

@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Tag, Check, ArrowRight, Trash2, AlertCircle, Sparkles } from 'lucide-react';
+import { Plus, Tag, Check, ArrowRight, Trash2, AlertCircle, Sparkles, Calendar } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
@@ -26,6 +26,36 @@ export const Chronos: React.FC = () => {
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [aiGoal, setAiGoal] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
+
+  const [isHabitModalOpen, setIsHabitModalOpen] = useState(false);
+  const [habitGoal, setHabitGoal] = useState('');
+  const [daysPerWeek, setDaysPerWeek] = useState(3);
+  const [habitLoading, setHabitLoading] = useState(false);
+
+  const handleGenerateHabitPlan = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!habitGoal.trim()) return;
+    setHabitLoading(true);
+    try {
+      const { data } = await api.post('/ai/planner/habit-plan', { habitGoal, daysPerWeek });
+      const sessions = data.data?.sessions || [];
+      sessions.forEach((s: any) => {
+        createTask({
+          title: `[Habit] ${s.title}`,
+          description: `${s.focusArea} (${s.recommendedTime}, ${s.durationMinutes} mins)`,
+          priority: 'MEDIUM',
+          status: 'TODO',
+          category: 'Habits & Study',
+        });
+      });
+      setHabitGoal('');
+      setIsHabitModalOpen(false);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setHabitLoading(false);
+    }
+  };
 
   const handleAiDecompose = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,7 +133,16 @@ export const Chronos: React.FC = () => {
             Manage your daily pipeline, schedule, and milestones.
           </p>
         </div>
-        <div className="flex items-center gap-2 self-start">
+        <div className="flex items-center gap-2 self-start flex-wrap">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setIsHabitModalOpen(true)}
+            className="flex items-center gap-1.5 border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary font-medium"
+          >
+            <Calendar size={14} className="text-amber-500" />
+            <span>AI Habit Planner</span>
+          </Button>
           <Button
             variant="secondary"
             size="sm"
@@ -312,6 +351,57 @@ export const Chronos: React.FC = () => {
                 <>
                   <Sparkles size={14} className="text-amber-400" />
                   <span>Generate Sub-tasks</span>
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal isOpen={isHabitModalOpen} onClose={() => setIsHabitModalOpen(false)} title="📅 AI Habit & Study Planner">
+        <form onSubmit={handleGenerateHabitPlan} className="space-y-4">
+          <div className="space-y-1 text-left">
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Habit Goal or Study Routine
+            </label>
+            <Input
+              placeholder="e.g. Read 12 books this year or 5k workout plan"
+              value={habitGoal}
+              onChange={(e) => setHabitGoal(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="space-y-1 text-left">
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Target Frequency (Days Per Week)
+            </label>
+            <select
+              className="w-full bg-card border border-border px-3 py-2.5 rounded-lg text-sm text-foreground outline-none focus:ring-2 focus:ring-accent/40"
+              value={daysPerWeek}
+              onChange={(e) => setDaysPerWeek(Number(e.target.value))}
+            >
+              <option value={2}>2 days / week</option>
+              <option value={3}>3 days / week</option>
+              <option value={5}>5 days / week</option>
+              <option value={7}>Daily (7 days / week)</option>
+            </select>
+          </div>
+
+          <div className="flex justify-end gap-2.5 pt-4">
+            <Button variant="outline" type="button" onClick={() => setIsHabitModalOpen(false)} disabled={habitLoading}>
+              Cancel
+            </Button>
+            <Button variant="primary" type="submit" disabled={habitLoading} className="flex items-center gap-2">
+              {habitLoading ? (
+                <>
+                  <Calendar size={14} className="animate-spin text-amber-400" />
+                  <span>Scheduling Habits...</span>
+                </>
+              ) : (
+                <>
+                  <Calendar size={14} className="text-amber-400" />
+                  <span>Generate Habit Schedule</span>
                 </>
               )}
             </Button>

@@ -447,4 +447,71 @@ export class AiService {
       };
     }
   }
+
+  async generateHabitPlan(dto: { habitGoal: string; daysPerWeek?: number }) {
+    const ai = this.ensureAiClient();
+    const days = dto.daysPerWeek || 3;
+
+    if (!ai) {
+      return {
+        habitTitle: dto.habitGoal,
+        frequency: `${days}x per week`,
+        sessions: [
+          {
+            title: `Session 1: ${dto.habitGoal} Fundamentals`,
+            durationMinutes: 30,
+            recommendedTime: 'Morning (8:00 AM)',
+            focusArea: 'Core concepts and warm-up.',
+          },
+          {
+            title: `Session 2: ${dto.habitGoal} Practice`,
+            durationMinutes: 45,
+            recommendedTime: 'Evening (6:00 PM)',
+            focusArea: 'Applied execution and review.',
+          },
+        ],
+      };
+    }
+
+    const responseSchema: Schema = {
+      type: Type.OBJECT,
+      properties: {
+        habitTitle: { type: Type.STRING },
+        frequency: { type: Type.STRING },
+        sessions: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              title: { type: Type.STRING },
+              durationMinutes: { type: Type.NUMBER },
+              recommendedTime: { type: Type.STRING },
+              focusArea: { type: Type.STRING },
+            },
+            required: ['title', 'durationMinutes', 'recommendedTime', 'focusArea'],
+          },
+        },
+      },
+      required: ['habitTitle', 'frequency', 'sessions'],
+    };
+
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: `Create a recurring habit & study schedule for the goal "${dto.habitGoal}" planned for ${days} days per week. Return structured micro-habit sessions:`,
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema,
+        },
+      });
+
+      return JSON.parse(response.text || '{}');
+    } catch (err) {
+      return {
+        habitTitle: dto.habitGoal,
+        frequency: `${days}x per week`,
+        sessions: [{ title: dto.habitGoal, durationMinutes: 30, recommendedTime: 'Morning', focusArea: 'Practice' }],
+      };
+    }
+  }
 }
