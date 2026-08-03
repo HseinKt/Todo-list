@@ -143,4 +143,144 @@ export class AiService {
       };
     }
   }
+
+  async categorizeNote(dto: { title: string; content?: string }) {
+    const ai = this.ensureAiClient();
+    if (!ai) {
+      return {
+        category: 'General',
+        tags: ['Draft', 'Notes'],
+        summary: 'Note content analyzed.',
+      };
+    }
+
+    const responseSchema: Schema = {
+      type: Type.OBJECT,
+      properties: {
+        category: { type: Type.STRING },
+        tags: {
+          type: Type.ARRAY,
+          items: { type: Type.STRING },
+        },
+        summary: { type: Type.STRING },
+      },
+      required: ['category', 'tags', 'summary'],
+    };
+
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: `Analyze this note and generate a primary category name, 2-4 relevant topic tags, and a 1-sentence summary:\nTitle: ${dto.title}\nContent: ${dto.content || ''}`,
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema,
+        },
+      });
+
+      return JSON.parse(response.text || '{}');
+    } catch (err) {
+      return {
+        category: 'Uncategorized',
+        tags: ['General'],
+        summary: dto.title,
+      };
+    }
+  }
+
+  async semanticSearchNotes(userId: string, query: string) {
+    const ai = this.ensureAiClient();
+    const notes = await this.prisma.note.findMany({
+      where: { userId, deletedAt: null },
+      select: { id: true, title: true, content: true },
+      take: 30,
+    });
+
+    if (notes.length === 0) return { results: [] };
+
+    if (!ai) {
+      const filtered = notes.filter(
+        (n) =>
+          n.title.toLowerCase().includes(query.toLowerCase()) ||
+          (n.content && n.content.toLowerCase().includes(query.toLowerCase()))
+      );
+      return {
+        results: filtered.map((n) => ({ id: n.id, relevanceScore: 85, reason: 'Keyword match' })),
+      };
+    }
+
+    const notePayload = notes.map((n) => ({ id: n.id, title: n.title, excerpt: n.content?.slice(0, 200) }));
+
+    const responseSchema: Schema = {
+      type: Type.OBJECT,
+      properties: {
+        results: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              id: { type: Type.STRING },
+              relevanceScore: { type: Type.NUMBER },
+              reason: { type: Type.STRING },
+            },
+            required: ['id', 'relevanceScore', 'reason'],
+          },
+        },
+      },
+      required: ['results'],
+    };
+
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: `Rank the following notes by conceptual relevance to the search query "${query}". Return relevance score (0-100) and a brief reason:\n${JSON.stringify(notePayload)}`,
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema,
+        },
+      });
+
+      return JSON.parse(response.text || '{"results":[]}');
+    } catch (err) {
+      return { results: [] };
+    }
+  }
+
+  async calculateBurnoutRisk(userId: string) {
+    const [completedCount, totalCount, overdueCount] = await Promise.all([
+      this.prisma.task.count({ where: { userId, completed: true, deletedAt: null } }),
+      this.prisma.task.count({ where: { userId, deletedAt: null } }),
+      this.prisma.task.count({
+        where: {
+          userId,
+          completed: false,
+          deletedAt: null,
+          dueDate: { lt: new Date() },
+        },
+      }),
+    ]);
+
+    const activeCount = totalCount - completedCount;
+    let energyIndex = 100 - overdueCount * 12 - Math.max(0, activeCount - 8) * 5;
+    energyIndex = Math.max(15, Math.min(100, energyIndex));
+
+    let riskLevel: 'LOW' | 'MODERATE' | 'HIGH' = 'LOW';
+    if (energyIndex < 40) riskLevel = 'HIGH';
+    else if (energyIndex < 70) riskLevel = 'MODERATE';
+
+    let tip = 'Your workload is balanced. Keep up the steady pace!';
+    if (riskLevel === 'HIGH') {
+      tip = 'High workload & overdue backlog detected. Consider delegating or rescheduling low-priority tasks.';
+    } else if (riskLevel === 'MODERATE') {
+      tip = 'Moderate workload detected. Focus on completing 2-3 high-impact tasks today to maintain focus.';
+    }
+
+    return {
+      energyIndex,
+      riskLevel,
+      activeTasks: activeCount,
+      completedTasks: completedCount,
+      overdueTasks: overdueCount,
+      recommendation: tip,
+    };
+  }
 }

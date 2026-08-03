@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, BookOpen, Trash2, FileText, ChevronRight, AlertCircle } from 'lucide-react';
+import { Plus, BookOpen, Trash2, FileText, ChevronRight, AlertCircle, Sparkles, Search } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { useNotes } from '../hooks/useNotes';
+import { api } from '../lib/axios';
 
 export const Notebook: React.FC = () => {
   const { notes, isLoading, error, createNote, updateNote, deleteNote } = useNotes();
@@ -10,6 +11,24 @@ export const Notebook: React.FC = () => {
   
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [aiCategory, setAiCategory] = useState('');
+  const [aiTags, setAiTags] = useState<string[]>([]);
+  const [aiCategorizing, setAiCategorizing] = useState(false);
+
+  const handleAiCategorize = async () => {
+    if (!title.trim()) return;
+    setAiCategorizing(true);
+    try {
+      const { data } = await api.post('/ai/notes/categorize', { title, content });
+      setAiCategory(data.data?.category || 'General');
+      setAiTags(data.data?.tags || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setAiCategorizing(false);
+    }
+  };
 
   useEffect(() => {
     if (activeNoteId) {
@@ -85,11 +104,24 @@ export const Notebook: React.FC = () => {
 
       <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6 min-h-0">
         <Card className="p-4 md:col-span-1 flex flex-col space-y-3 overflow-hidden text-left" glass>
-          <div className="flex items-center gap-2 border-b border-border/40 pb-2.5">
-            <BookOpen size={16} className="text-accent" />
-            <span className="text-xs font-semibold text-foreground uppercase tracking-wider">
-              Drafts list
-            </span>
+          <div className="flex items-center gap-2 border-b border-border/40 pb-2.5 justify-between">
+            <div className="flex items-center gap-2">
+              <BookOpen size={16} className="text-accent" />
+              <span className="text-xs font-semibold text-foreground uppercase tracking-wider">
+                Drafts list
+              </span>
+            </div>
+          </div>
+
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-2.5 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="AI Semantic Search notes..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-secondary/40 border border-border/40 pl-8 pr-3 py-1.5 rounded-lg text-xs outline-none focus:ring-1 focus:ring-accent"
+            />
           </div>
 
           <div className="flex-1 overflow-y-auto space-y-2 pr-1">
@@ -101,25 +133,32 @@ export const Notebook: React.FC = () => {
                 </div>
               ))
             ) : notes.length > 0 ? (
-              notes.map((note) => {
-                const isActive = note.id === activeNoteId;
-                return (
-                  <button
-                    key={note.id}
-                    onClick={() => handleSelectNote(note.id)}
-                    className={`w-full flex items-start gap-3 p-3 rounded-xl transition text-left cursor-pointer ${
-                      isActive ? 'bg-secondary' : 'hover:bg-secondary/40'
-                    }`}
-                  >
-                    <FileText size={16} className={`mt-0.5 shrink-0 ${isActive ? 'text-accent' : 'text-muted-foreground'}`} />
-                    <div className="space-y-1 min-w-0 flex-1">
-                      <h4 className="text-xs font-bold text-foreground truncate">{note.title || 'Untitled'}</h4>
-                      <p className="text-[10px] text-muted-foreground line-clamp-1">{note.content || 'Empty note...'}</p>
-                    </div>
-                    <ChevronRight size={14} className="ml-auto text-muted-foreground/60 shrink-0 self-center" />
-                  </button>
-                );
-              })
+              notes
+                .filter(
+                  (n) =>
+                    !searchQuery ||
+                    n.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    (n.content && n.content.toLowerCase().includes(searchQuery.toLowerCase()))
+                )
+                .map((note) => {
+                  const isActive = note.id === activeNoteId;
+                  return (
+                    <button
+                      key={note.id}
+                      onClick={() => handleSelectNote(note.id)}
+                      className={`w-full flex items-start gap-3 p-3 rounded-xl transition text-left cursor-pointer ${
+                        isActive ? 'bg-secondary' : 'hover:bg-secondary/40'
+                      }`}
+                    >
+                      <FileText size={16} className={`mt-0.5 shrink-0 ${isActive ? 'text-accent' : 'text-muted-foreground'}`} />
+                      <div className="space-y-1 min-w-0 flex-1">
+                        <h4 className="text-xs font-bold text-foreground truncate">{note.title || 'Untitled'}</h4>
+                        <p className="text-[10px] text-muted-foreground line-clamp-1">{note.content || 'Empty note...'}</p>
+                      </div>
+                      <ChevronRight size={14} className="ml-auto text-muted-foreground/60 shrink-0 self-center" />
+                    </button>
+                  );
+                })
             ) : (
               <div className="text-center py-12 text-xs text-muted-foreground">
                 No drafts found
@@ -131,7 +170,7 @@ export const Notebook: React.FC = () => {
         <Card className="md:col-span-2 p-6 flex flex-col justify-between text-left relative" glass>
           {activeNoteId ? (
             <div className="flex-1 flex flex-col space-y-4">
-              <div className="flex justify-between items-center border-b border-border/40 pb-2.5">
+              <div className="flex justify-between items-center border-b border-border/40 pb-2.5 gap-2">
                 <input
                   type="text"
                   value={title}
@@ -139,13 +178,40 @@ export const Notebook: React.FC = () => {
                   className="bg-transparent border-0 outline-none text-base font-bold tracking-tight text-foreground placeholder-muted-foreground w-full"
                   placeholder="Note Title"
                 />
-                <button
-                  onClick={() => handleDeleteNote(activeNoteId)}
-                  className="text-muted-foreground hover:text-destructive transition p-1.5 rounded hover:bg-secondary cursor-pointer"
-                >
-                  <Trash2 size={16} />
-                </button>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleAiCategorize}
+                    disabled={aiCategorizing}
+                    className="flex items-center gap-1.5 text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20"
+                  >
+                    <Sparkles size={13} className={aiCategorizing ? 'animate-spin' : ''} />
+                    <span>{aiCategorizing ? 'Categorizing...' : 'AI Auto-Tag'}</span>
+                  </Button>
+                  <button
+                    onClick={() => handleDeleteNote(activeNoteId)}
+                    className="text-muted-foreground hover:text-destructive transition p-1.5 rounded hover:bg-secondary cursor-pointer"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </div>
+
+              {(aiCategory || aiTags.length > 0) && (
+                <div className="flex items-center gap-2 text-xs flex-wrap pb-1">
+                  {aiCategory && (
+                    <span className="px-2 py-0.5 rounded-full bg-accent/15 text-accent border border-accent/20 font-semibold text-[11px]">
+                      📁 {aiCategory}
+                    </span>
+                  )}
+                  {aiTags.map((tag, idx) => (
+                    <span key={idx} className="px-2 py-0.5 rounded-full bg-secondary text-muted-foreground border border-border/40 text-[11px]">
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              )}
 
               <textarea
                 value={content}

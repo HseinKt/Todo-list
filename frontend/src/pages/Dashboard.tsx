@@ -1,11 +1,22 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, Target, Flame, Calendar, Plus } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { Sparkles, Target, Flame, Calendar, Plus, Zap } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
+import { api } from '../lib/axios';
 
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
+
+  const { data: burnoutData } = useQuery({
+    queryKey: ['burnout-risk'],
+    queryFn: async () => {
+      const { data } = await api.get('/ai/burnout-risk');
+      return data.data;
+    },
+    staleTime: 1000 * 60 * 5,
+  });
 
   const getGreeting = () => {
     const hr = new Date().getHours();
@@ -50,6 +61,40 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
       </Card>
+
+      {burnoutData && (
+        <Card glass className="bg-gradient-to-r from-emerald-500/10 via-accent/5 to-amber-500/10 border-border/50 text-left space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Zap size={18} className="text-amber-400 animate-pulse" />
+              <h3 className="text-sm font-bold text-foreground">Chronos Life Guard • Energy & Burnout Risk</h3>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${
+                burnoutData.riskLevel === 'HIGH'
+                  ? 'bg-red-500/10 text-red-500 border-red-500/20'
+                  : burnoutData.riskLevel === 'MODERATE'
+                  ? 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                  : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+              }`}>
+                {burnoutData.riskLevel} RISK
+              </span>
+              <span className="text-xs font-bold text-foreground">{burnoutData.energyIndex}% Energy</span>
+            </div>
+          </div>
+
+          <div className="w-full bg-border/40 h-2 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${
+                burnoutData.energyIndex < 40 ? 'bg-red-500' : burnoutData.energyIndex < 70 ? 'bg-amber-500' : 'bg-emerald-500'
+              }`}
+              style={{ width: `${burnoutData.energyIndex}%` }}
+            />
+          </div>
+
+          <p className="text-xs text-muted-foreground">{burnoutData.recommendation}</p>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card hoverEffect glass className="text-left space-y-3">
