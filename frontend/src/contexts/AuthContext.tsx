@@ -61,6 +61,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('refresh_token', refreshToken);
     localStorage.setItem('user', JSON.stringify(loggedUser));
     setUser(loggedUser);
+
+    // Trigger parallel prefetching for workspace modules immediately upon login
+    Promise.all([
+      queryClient.prefetchQuery({
+        queryKey: ['tasks'],
+        queryFn: async () => {
+          const { data } = await api.get('/tasks');
+          return data.data?.data || [];
+        },
+      }),
+      queryClient.prefetchQuery({
+        queryKey: ['transactions'],
+        queryFn: async () => {
+          const { data } = await api.get('/budgets/transactions');
+          return data.data?.data || [];
+        },
+      }),
+      queryClient.prefetchQuery({
+        queryKey: ['notes'],
+        queryFn: async () => {
+          const { data } = await api.get('/notes');
+          return data.data || [];
+        },
+      }),
+    ]).catch(() => {});
+
     return { require2FA: false };
   };
 
