@@ -3,12 +3,13 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Tag, Check, ArrowRight, Trash2, AlertCircle } from 'lucide-react';
+import { Plus, Tag, Check, ArrowRight, Trash2, AlertCircle, Sparkles } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { Input } from '../components/ui/Input';
 import { useTasks } from '../hooks/useTasks';
+import { api } from '../lib/axios';
 
 const taskSchema = z.object({
   title: z.string().min(3, { message: 'Task title must be at least 3 characters' }),
@@ -22,6 +23,34 @@ type TaskFormData = z.infer<typeof taskSchema>;
 export const Chronos: React.FC = () => {
   const { tasks, isLoading, error, createTask, updateTask, deleteTask } = useTasks();
   const [isOpen, setIsOpen] = useState(false);
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+  const [aiGoal, setAiGoal] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+
+  const handleAiDecompose = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!aiGoal.trim()) return;
+    setAiLoading(true);
+    try {
+      const { data } = await api.post('/ai/decompose', { goalTitle: aiGoal, targetDays: 14 });
+      const milestones = data.data?.milestones || [];
+      milestones.forEach((m: any) => {
+        createTask({
+          title: m.title,
+          description: m.description,
+          priority: m.priority || 'MEDIUM',
+          status: 'TODO',
+          category: 'AI Milestone',
+        });
+      });
+      setAiGoal('');
+      setIsAiModalOpen(false);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const {
     register,
@@ -74,10 +103,21 @@ export const Chronos: React.FC = () => {
             Manage your daily pipeline, schedule, and milestones.
           </p>
         </div>
-        <Button variant="primary" size="sm" onClick={() => setIsOpen(true)} className="flex items-center gap-1.5 self-start">
-          <Plus size={14} />
-          <span>Add Task</span>
-        </Button>
+        <div className="flex items-center gap-2 self-start">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setIsAiModalOpen(true)}
+            className="flex items-center gap-1.5 border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary font-medium"
+          >
+            <Sparkles size={14} className="text-amber-500 animate-pulse" />
+            <span>AI Decompose Goal</span>
+          </Button>
+          <Button variant="primary" size="sm" onClick={() => setIsOpen(true)} className="flex items-center gap-1.5">
+            <Plus size={14} />
+            <span>Add Task</span>
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -236,6 +276,44 @@ export const Chronos: React.FC = () => {
             </Button>
             <Button variant="primary" type="submit">
               Save Task
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal isOpen={isAiModalOpen} onClose={() => setIsAiModalOpen(false)} title="✨ AI Goal Decomposer">
+        <form onSubmit={handleAiDecompose} className="space-y-4">
+          <div className="space-y-1 text-left">
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Objective or Milestone
+            </label>
+            <Input
+              placeholder="e.g. Prepare for AWS Certified Solutions Architect exam in 3 weeks"
+              value={aiGoal}
+              onChange={(e) => setAiGoal(e.target.value)}
+              required
+            />
+            <p className="text-[11px] text-muted-foreground pt-1">
+              Google Gemini 2.5 Flash AI will analyze your goal and automatically generate structured sub-tasks for your Kanban pipeline.
+            </p>
+          </div>
+
+          <div className="flex justify-end gap-2.5 pt-4">
+            <Button variant="outline" type="button" onClick={() => setIsAiModalOpen(false)} disabled={aiLoading}>
+              Cancel
+            </Button>
+            <Button variant="primary" type="submit" disabled={aiLoading} className="flex items-center gap-2">
+              {aiLoading ? (
+                <>
+                  <Sparkles size={14} className="animate-spin text-amber-400" />
+                  <span>Decomposing Goal...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles size={14} className="text-amber-400" />
+                  <span>Generate Sub-tasks</span>
+                </>
+              )}
             </Button>
           </div>
         </form>
