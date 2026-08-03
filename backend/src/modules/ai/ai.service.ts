@@ -709,4 +709,37 @@ export class AiService {
       };
     }
   }
+
+  async chatWithWorkspace(userId: string, userMessage: string) {
+    const ai = this.ensureAiClient();
+
+    const [tasks, transactions, notes] = await Promise.all([
+      this.prisma.task.findMany({ where: { userId, completed: false, deletedAt: null }, take: 10 }),
+      this.prisma.transaction.findMany({ where: { userId, deletedAt: null }, take: 10 }),
+      this.prisma.note.findMany({ where: { userId, deletedAt: null }, take: 5 }),
+    ]);
+
+    const contextPayload = {
+      pendingTasks: tasks.map((t) => ({ title: t.text, priority: t.priority })),
+      financialTransactionsCount: transactions.length,
+      userNotesCount: notes.length,
+    };
+
+    if (!ai) {
+      return {
+        reply: `You currently have ${tasks.length} pending tasks, ${transactions.length} recorded transactions, and ${notes.length} saved notes. How can I assist you further?`,
+      };
+    }
+
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: `You are an AI Workspace Assistant for a user's productivity app. Context:\n${JSON.stringify(contextPayload)}\nUser Question: ${userMessage}\nGive a helpful, clear, and concise answer (2-3 sentences max).`,
+      });
+
+      return { reply: response.text || 'I am your workspace assistant. How can I help you?' };
+    } catch (err) {
+      return { reply: 'Unable to process your request at this moment. Please try again.' };
+    }
+  }
 }

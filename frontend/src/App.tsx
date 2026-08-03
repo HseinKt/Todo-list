@@ -8,6 +8,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastProvider } from './components/ui/Toast';
 import { Sidebar } from './components/Sidebar';
 import { CommandPalette } from './components/CommandPalette';
+import { AIChatWidget } from './components/ui/AIChatWidget';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Landing } from './pages/Landing';
 import { Dashboard } from './pages/Dashboard';
@@ -39,6 +40,7 @@ const MainLayout: React.FC = () => {
         onClose={() => setIsCommandOpen(false)}
         setTab={handleSetTab}
       />
+      <AIChatWidget />
     </div>
   );
 };

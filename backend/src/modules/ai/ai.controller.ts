@@ -78,4 +78,10 @@ export class AiController {
   async predictNetWorthGrowth(@CurrentUser('id') userId: string) {
     return this.aiService.predictNetWorthGrowth(userId);
   }
+
+  @Post('chat')
+  @ApiOperation({ summary: 'Chat in plain English with your AI Workspace Assistant' })
+  async chatWithWorkspace(@CurrentUser('id') userId: string, @Body('message') message: string) {
+    return this.aiService.chatWithWorkspace(userId, message || '');
+  }
 }
