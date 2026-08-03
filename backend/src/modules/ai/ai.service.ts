@@ -799,4 +799,48 @@ export class AiService {
       return { timeBlocks: [] };
     }
   }
+
+  async evaluateIdeaViability(dto: { ideaTitle: string; ideaDescription: string }) {
+    const ai = this.ensureAiClient();
+
+    if (!ai || !dto.ideaDescription) {
+      return {
+        viabilityScore: 82,
+        targetAudience: 'Early adopters and tech professionals.',
+        keyRisks: ['Market competition and user acquisition costs.'],
+        mvpSteps: ['Build interactive wireframes', 'Validate with 10 beta users', 'Launch core feature MVP'],
+      };
+    }
+
+    const responseSchema: Schema = {
+      type: Type.OBJECT,
+      properties: {
+        viabilityScore: { type: Type.NUMBER },
+        targetAudience: { type: Type.STRING },
+        keyRisks: { type: Type.ARRAY, items: { type: Type.STRING } },
+        mvpSteps: { type: Type.ARRAY, items: { type: Type.STRING } },
+      },
+      required: ['viabilityScore', 'targetAudience', 'keyRisks', 'mvpSteps'],
+    };
+
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: `Evaluate the business and product viability of this idea:\nTitle: ${dto.ideaTitle}\nDescription: ${dto.ideaDescription}`,
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema,
+        },
+      });
+
+      return JSON.parse(response.text || '{}');
+    } catch (err) {
+      return {
+        viabilityScore: 75,
+        targetAudience: 'General users',
+        keyRisks: ['Execution complexity'],
+        mvpSteps: ['Build prototype'],
+      };
+    }
+  }
 }

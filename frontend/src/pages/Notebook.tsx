@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, BookOpen, Trash2, FileText, ChevronRight, AlertCircle, Sparkles, Search, Check } from 'lucide-react';
+import { Plus, BookOpen, Trash2, FileText, ChevronRight, AlertCircle, Sparkles, Search, Check, Lightbulb } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { useNotes } from '../hooks/useNotes';
@@ -22,6 +22,22 @@ export const Notebook: React.FC = () => {
   const [extractedTasks, setExtractedTasks] = useState<any[]>([]);
   const [summarizing, setSummarizing] = useState(false);
   const [pushedSuccess, setPushedSuccess] = useState(false);
+
+  const [ideaData, setIdeaData] = useState<any>(null);
+  const [evaluatingIdea, setEvaluatingIdea] = useState(false);
+
+  const handleEvaluateIdea = async () => {
+    if (!title.trim() || !content.trim()) return;
+    setEvaluatingIdea(true);
+    try {
+      const { data } = await api.post('/ai/notes/evaluate-idea', { ideaTitle: title, ideaDescription: content });
+      setIdeaData(data.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setEvaluatingIdea(false);
+    }
+  };
 
   const handleAiCategorize = async () => {
     if (!title.trim()) return;
@@ -217,6 +233,16 @@ export const Notebook: React.FC = () => {
                   <Button
                     variant="secondary"
                     size="sm"
+                    onClick={handleEvaluateIdea}
+                    disabled={evaluatingIdea}
+                    className="flex items-center gap-1.5 text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20"
+                  >
+                    <Lightbulb size={13} className={evaluatingIdea ? 'animate-spin' : ''} />
+                    <span>{evaluatingIdea ? 'Evaluating...' : 'AI Evaluate Idea'}</span>
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
                     onClick={handleSummarizeAndExtract}
                     disabled={summarizing}
                     className="flex items-center gap-1.5 text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20"
@@ -242,6 +268,30 @@ export const Notebook: React.FC = () => {
                   </button>
                 </div>
               </div>
+
+              {ideaData && (
+                <div className="p-3.5 bg-gradient-to-r from-amber-500/10 via-primary/5 to-transparent border border-amber-500/20 rounded-xl space-y-2 text-left">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-foreground">💡 AI Idea Viability Assessment</span>
+                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/20">
+                      Score: {ideaData.viabilityScore}/100
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground"><strong className="text-foreground">Target Audience:</strong> {ideaData.targetAudience}</p>
+                  {ideaData.mvpSteps?.length > 0 && (
+                    <div className="space-y-1">
+                      <span className="text-[11px] font-bold text-foreground">MVP Execution Roadmap:</span>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-1.5">
+                        {ideaData.mvpSteps.map((step: string, idx: number) => (
+                          <div key={idx} className="p-2 bg-card/80 border border-border/40 rounded-lg text-[10px] text-foreground font-medium">
+                            Step {idx + 1}: {step}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {(aiCategory || aiTags.length > 0) && (
                 <div className="flex items-center gap-2 text-xs flex-wrap pb-1">

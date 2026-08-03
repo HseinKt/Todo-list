@@ -90,4 +90,10 @@ export class AiController {
   async generateTimeBlockSchedule(@CurrentUser('id') userId: string) {
     return this.aiService.generateTimeBlockSchedule(userId);
   }
+
+  @Post('notes/evaluate-idea')
+  @ApiOperation({ summary: 'Evaluate business idea viability score, risks, target audience, and MVP steps' })
+  async evaluateIdeaViability(@Body() dto: { ideaTitle: string; ideaDescription: string }) {
+    return this.aiService.evaluateIdeaViability(dto);
+  }
 }
