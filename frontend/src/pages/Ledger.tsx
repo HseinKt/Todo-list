@@ -3,12 +3,14 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, TrendingUp, TrendingDown, DollarSign, Tag, AlertCircle } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { Plus, TrendingUp, TrendingDown, DollarSign, Tag, AlertCircle, Sparkles } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { Input } from '../components/ui/Input';
 import { useLedger } from '../hooks/useLedger';
+import { api } from '../lib/axios';
 
 const transactionSchema = z.object({
   amount: z.string().refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
@@ -25,6 +27,15 @@ export const Ledger: React.FC = () => {
   const { transactions, isLoading, error, createTransaction } = useLedger();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedType, setSelectedType] = useState<'INFLOW' | 'OUTFLOW'>('OUTFLOW');
+
+  const { data: aiAdvice } = useQuery({
+    queryKey: ['ai-finance-advice'],
+    queryFn: async () => {
+      const { data } = await api.get('/ai/finance/advice');
+      return data.data;
+    },
+    staleTime: 1000 * 60 * 10,
+  });
 
   const {
     register,
@@ -122,6 +133,31 @@ export const Ledger: React.FC = () => {
           <p className="text-[10px] text-muted-foreground">Categorized wealth deductions</p>
         </Card>
       </div>
+
+      {aiAdvice && (
+        <Card glass className="p-4 bg-gradient-to-r from-primary/10 via-accent/5 to-transparent border-primary/20 text-left space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles size={18} className="text-amber-400 animate-pulse" />
+              <h3 className="text-sm font-bold text-foreground">AI Financial Intelligence Advisor</h3>
+            </div>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-xs font-semibold">
+              <span>Health Score: {aiAdvice.healthScore}/100</span>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">{aiAdvice.summary}</p>
+          {aiAdvice.recommendations?.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-1">
+              {aiAdvice.recommendations.map((rec: string, idx: number) => (
+                <div key={idx} className="flex items-start gap-2 bg-card/60 border border-border/40 p-2.5 rounded-lg text-xs">
+                  <span className="text-amber-400 font-bold">•</span>
+                  <span className="text-foreground/90">{rec}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      )}
 
       <Card className="text-left space-y-4">
         <h3 className="text-sm font-semibold text-foreground tracking-tight border-b border-border/40 pb-2.5">
