@@ -84,4 +84,10 @@ export class AiController {
   async chatWithWorkspace(@CurrentUser('id') userId: string, @Body('message') message: string) {
     return this.aiService.chatWithWorkspace(userId, message || '');
   }
+
+  @Get('planner/time-blocks')
+  @ApiOperation({ summary: 'Generate optimized hour-by-hour time block schedule for pending tasks' })
+  async generateTimeBlockSchedule(@CurrentUser('id') userId: string) {
+    return this.aiService.generateTimeBlockSchedule(userId);
+  }
 }

@@ -742,4 +742,61 @@ export class AiService {
       return { reply: 'Unable to process your request at this moment. Please try again.' };
     }
   }
+
+  async generateTimeBlockSchedule(userId: string) {
+    const ai = this.ensureAiClient();
+    const tasks = await this.prisma.task.findMany({
+      where: { userId, completed: false, deletedAt: null },
+      select: { id: true, text: true, priority: true },
+      take: 8,
+    });
+
+    if (tasks.length === 0) {
+      return { timeBlocks: [] };
+    }
+
+    if (!ai) {
+      return {
+        timeBlocks: tasks.map((t, idx) => ({
+          timeSlot: `${9 + idx}:00 AM - ${10 + idx}:00 AM`,
+          taskTitle: t.text,
+          focusType: t.priority === 'HIGH' ? 'Deep Focus' : 'Execution',
+        })),
+      };
+    }
+
+    const responseSchema: Schema = {
+      type: Type.OBJECT,
+      properties: {
+        timeBlocks: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              timeSlot: { type: Type.STRING },
+              taskTitle: { type: Type.STRING },
+              focusType: { type: Type.STRING },
+            },
+            required: ['timeSlot', 'taskTitle', 'focusType'],
+          },
+        },
+      },
+      required: ['timeBlocks'],
+    };
+
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: `Create an optimized hour-by-hour time-block schedule for today starting from 9:00 AM for these tasks:\n${JSON.stringify(tasks)}`,
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema,
+        },
+      });
+
+      return JSON.parse(response.text || '{}');
+    } catch (err) {
+      return { timeBlocks: [] };
+    }
+  }
 }

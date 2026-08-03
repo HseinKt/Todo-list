@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, Tag, Check, ArrowRight, Trash2, AlertCircle, Sparkles, Calendar, Target } from 'lucide-react';
+import { Plus, Tag, Check, ArrowRight, Trash2, AlertCircle, Sparkles, Calendar, Target, Clock } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
@@ -27,6 +27,18 @@ export const Chronos: React.FC = () => {
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [aiGoal, setAiGoal] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
+
+  const [isTimeBlockOpen, setIsTimeBlockOpen] = useState(false);
+
+  const { data: timeBlockData, isLoading: timeBlockLoading } = useQuery({
+    queryKey: ['ai-planner-time-blocks'],
+    queryFn: async () => {
+      const { data } = await api.get('/ai/planner/time-blocks');
+      return data.data;
+    },
+    enabled: isTimeBlockOpen,
+    staleTime: 1000 * 60 * 5,
+  });
 
   const [isMatrixOpen, setIsMatrixOpen] = useState(false);
 
@@ -147,6 +159,15 @@ export const Chronos: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center gap-2 self-start flex-wrap">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setIsTimeBlockOpen(true)}
+            className="flex items-center gap-1.5 border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary font-medium"
+          >
+            <Clock size={14} className="text-amber-500" />
+            <span>AI Time-Block Allocator</span>
+          </Button>
           <Button
             variant="secondary"
             size="sm"
@@ -529,6 +550,47 @@ export const Chronos: React.FC = () => {
           <div className="flex justify-end pt-3 border-t border-border/40">
             <Button variant="outline" size="sm" onClick={() => setIsMatrixOpen(false)}>
               Close Matrix
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal isOpen={isTimeBlockOpen} onClose={() => setIsTimeBlockOpen(false)} title="⏰ AI Time-Block Allocator • Today's Focus Schedule">
+        <div className="space-y-4">
+          <p className="text-xs text-muted-foreground text-left">
+            Gemini 2.5 Flash organizes your pending tasks into an optimal hour-by-hour time block schedule for maximum focus.
+          </p>
+
+          {timeBlockLoading ? (
+            <div className="py-12 flex flex-col items-center justify-center space-y-3 text-muted-foreground">
+              <Sparkles size={24} className="animate-spin text-amber-400" />
+              <span className="text-xs font-medium">Generating hour-by-hour focus schedule with Gemini 2.5 Flash...</span>
+            </div>
+          ) : timeBlockData?.timeBlocks?.length > 0 ? (
+            <div className="space-y-2 text-left">
+              {timeBlockData.timeBlocks.map((block: any, idx: number) => (
+                <div key={idx} className="p-3 rounded-xl bg-card/70 border border-border/50 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <span className="px-2.5 py-1 rounded-lg bg-primary/10 text-primary font-mono font-bold text-xs shrink-0">
+                      {block.timeSlot}
+                    </span>
+                    <span className="text-xs font-semibold text-foreground">{block.taskTitle}</span>
+                  </div>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-accent/15 text-accent font-bold uppercase shrink-0">
+                    {block.focusType}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="py-8 text-center text-xs text-muted-foreground">
+              No pending tasks found to block. Add some tasks first!
+            </div>
+          )}
+
+          <div className="flex justify-end pt-3 border-t border-border/40">
+            <Button variant="outline" size="sm" onClick={() => setIsTimeBlockOpen(false)}>
+              Close Schedule
             </Button>
           </div>
         </div>
