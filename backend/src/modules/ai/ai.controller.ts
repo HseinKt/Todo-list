@@ -66,4 +66,10 @@ export class AiController {
   async summarizeNoteAndExtractActions(@Body() dto: { title: string; content: string }) {
     return this.aiService.summarizeNoteAndExtractActions(dto);
   }
+
+  @Get('tasks/eisenhower')
+  @ApiOperation({ summary: 'Classify active tasks into the 4 Eisenhower Urgency/Impact Quadrants' })
+  async prioritizeTasksWithEisenhower(@CurrentUser('id') userId: string) {
+    return this.aiService.prioritizeTasksWithEisenhower(userId);
+  }
 }

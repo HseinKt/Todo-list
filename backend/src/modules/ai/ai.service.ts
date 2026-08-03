@@ -569,4 +569,81 @@ export class AiService {
       };
     }
   }
+
+  async prioritizeTasksWithEisenhower(userId: string) {
+    const ai = this.ensureAiClient();
+    const tasks = await this.prisma.task.findMany({
+      where: { userId, completed: false, deletedAt: null },
+      select: { id: true, text: true, description: true, priority: true },
+      take: 20,
+    });
+
+    if (tasks.length === 0) {
+      return {
+        q1DoFirst: [],
+        q2Schedule: [],
+        q3Delegate: [],
+        q4Eliminate: [],
+      };
+    }
+
+    const taskPayload = tasks.map((t) => ({
+      id: t.id,
+      title: t.text,
+      description: t.description,
+      priority: t.priority,
+    }));
+
+    if (!ai) {
+      return {
+        q1DoFirst: taskPayload.slice(0, 2).map((t) => ({ ...t, urgencyScore: 9, impactScore: 9, advice: 'Execute immediately.' })),
+        q2Schedule: taskPayload.slice(2, 4).map((t) => ({ ...t, urgencyScore: 4, impactScore: 8, advice: 'Schedule dedicated focus block.' })),
+        q3Delegate: [],
+        q4Eliminate: [],
+      };
+    }
+
+    const taskItemSchema: Schema = {
+      type: Type.OBJECT,
+      properties: {
+        id: { type: Type.STRING },
+        title: { type: Type.STRING },
+        urgencyScore: { type: Type.NUMBER },
+        impactScore: { type: Type.NUMBER },
+        advice: { type: Type.STRING },
+      },
+      required: ['id', 'title', 'urgencyScore', 'impactScore', 'advice'],
+    };
+
+    const responseSchema: Schema = {
+      type: Type.OBJECT,
+      properties: {
+        q1DoFirst: { type: Type.ARRAY, items: taskItemSchema },
+        q2Schedule: { type: Type.ARRAY, items: taskItemSchema },
+        q3Delegate: { type: Type.ARRAY, items: taskItemSchema },
+        q4Eliminate: { type: Type.ARRAY, items: taskItemSchema },
+      },
+      required: ['q1DoFirst', 'q2Schedule', 'q3Delegate', 'q4Eliminate'],
+    };
+
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: `Evaluate these pending tasks and place them into the 4 Eisenhower Quadrants (Q1: High Urgency & High Impact, Q2: Low Urgency & High Impact, Q3: High Urgency & Low Impact, Q4: Low Urgency & Low Impact):\n${JSON.stringify(taskPayload)}`,
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema,
+        },
+      });
+
+      return JSON.parse(response.text || '{}');
+    } catch (err) {
+      return {
+        q1DoFirst: [],
+        q2Schedule: [],
+        q3Delegate: [],
+        q4Eliminate: [],
+      };
+    }
+  }
 }

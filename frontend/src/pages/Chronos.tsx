@@ -3,7 +3,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Tag, Check, ArrowRight, Trash2, AlertCircle, Sparkles, Calendar } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { Plus, Tag, Check, ArrowRight, Trash2, AlertCircle, Sparkles, Calendar, Target } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
@@ -26,6 +27,18 @@ export const Chronos: React.FC = () => {
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [aiGoal, setAiGoal] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
+
+  const [isMatrixOpen, setIsMatrixOpen] = useState(false);
+
+  const { data: matrixData, isLoading: matrixLoading } = useQuery({
+    queryKey: ['ai-tasks-eisenhower'],
+    queryFn: async () => {
+      const { data } = await api.get('/ai/tasks/eisenhower');
+      return data.data;
+    },
+    enabled: isMatrixOpen,
+    staleTime: 1000 * 60 * 5,
+  });
 
   const [isHabitModalOpen, setIsHabitModalOpen] = useState(false);
   const [habitGoal, setHabitGoal] = useState('');
@@ -134,6 +147,15 @@ export const Chronos: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center gap-2 self-start flex-wrap">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setIsMatrixOpen(true)}
+            className="flex items-center gap-1.5 border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary font-medium"
+          >
+            <Target size={14} className="text-amber-500" />
+            <span>AI Eisenhower Matrix</span>
+          </Button>
           <Button
             variant="secondary"
             size="sm"
@@ -407,6 +429,109 @@ export const Chronos: React.FC = () => {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      <Modal isOpen={isMatrixOpen} onClose={() => setIsMatrixOpen(false)} title="🎯 AI Eisenhower Matrix • Urgency & Impact Analysis">
+        <div className="space-y-4">
+          <p className="text-xs text-muted-foreground text-left">
+            Gemini 2.5 Flash analyzes your active tasks along Urgency (1-10) and Impact (1-10) dimensions to place them into the 4 strategic execution quadrants.
+          </p>
+
+          {matrixLoading ? (
+            <div className="py-12 flex flex-col items-center justify-center space-y-3 text-muted-foreground">
+              <Sparkles size={24} className="animate-spin text-amber-400" />
+              <span className="text-xs font-medium">Analyzing task urgency and strategic impact with Gemini 2.5 Flash...</span>
+            </div>
+          ) : matrixData ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+              {/* Q1: DO FIRST */}
+              <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 space-y-2">
+                <div className="flex justify-between items-center border-b border-red-500/20 pb-2">
+                  <span className="text-xs font-bold text-red-500 uppercase tracking-wider">🔴 Q1: DO FIRST (Urgent & Important)</span>
+                  <span className="text-[10px] bg-red-500/20 text-red-500 px-2 py-0.5 rounded-full font-bold">{matrixData.q1DoFirst?.length || 0}</span>
+                </div>
+                <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                  {matrixData.q1DoFirst?.length > 0 ? (
+                    matrixData.q1DoFirst.map((t: any, idx: number) => (
+                      <div key={idx} className="p-2 bg-card/80 border border-border/50 rounded-lg text-xs space-y-1">
+                        <span className="font-semibold text-foreground">{t.title}</span>
+                        <p className="text-[10px] text-muted-foreground">{t.advice}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <span className="text-[11px] text-muted-foreground italic">No urgent critical tasks flagged.</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Q2: SCHEDULE */}
+              <div className="p-3.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 space-y-2">
+                <div className="flex justify-between items-center border-b border-indigo-500/20 pb-2">
+                  <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider">🔵 Q2: SCHEDULE (High Impact Focus)</span>
+                  <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full font-bold">{matrixData.q2Schedule?.length || 0}</span>
+                </div>
+                <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                  {matrixData.q2Schedule?.length > 0 ? (
+                    matrixData.q2Schedule.map((t: any, idx: number) => (
+                      <div key={idx} className="p-2 bg-card/80 border border-border/50 rounded-lg text-xs space-y-1">
+                        <span className="font-semibold text-foreground">{t.title}</span>
+                        <p className="text-[10px] text-muted-foreground">{t.advice}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <span className="text-[11px] text-muted-foreground italic">No strategic growth tasks flagged.</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Q3: BATCH / DELEGATE */}
+              <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 space-y-2">
+                <div className="flex justify-between items-center border-b border-amber-500/20 pb-2">
+                  <span className="text-xs font-bold text-amber-500 uppercase tracking-wider">🟡 Q3: BATCH (Urgent, Low Impact)</span>
+                  <span className="text-[10px] bg-amber-500/20 text-amber-500 px-2 py-0.5 rounded-full font-bold">{matrixData.q3Delegate?.length || 0}</span>
+                </div>
+                <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                  {matrixData.q3Delegate?.length > 0 ? (
+                    matrixData.q3Delegate.map((t: any, idx: number) => (
+                      <div key={idx} className="p-2 bg-card/80 border border-border/50 rounded-lg text-xs space-y-1">
+                        <span className="font-semibold text-foreground">{t.title}</span>
+                        <p className="text-[10px] text-muted-foreground">{t.advice}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <span className="text-[11px] text-muted-foreground italic">No low-impact urgent tasks.</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Q4: ELIMINATE */}
+              <div className="p-3.5 rounded-xl bg-secondary/60 border border-border/50 space-y-2">
+                <div className="flex justify-between items-center border-b border-border/40 pb-2">
+                  <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">⚪ Q4: ELIMINATE (Low Priority)</span>
+                  <span className="text-[10px] bg-secondary text-muted-foreground px-2 py-0.5 rounded-full font-bold">{matrixData.q4Eliminate?.length || 0}</span>
+                </div>
+                <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                  {matrixData.q4Eliminate?.length > 0 ? (
+                    matrixData.q4Eliminate.map((t: any, idx: number) => (
+                      <div key={idx} className="p-2 bg-card/80 border border-border/50 rounded-lg text-xs space-y-1">
+                        <span className="font-semibold text-foreground">{t.title}</span>
+                        <p className="text-[10px] text-muted-foreground">{t.advice}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <span className="text-[11px] text-muted-foreground italic">No tasks to eliminate.</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="flex justify-end pt-3 border-t border-border/40">
+            <Button variant="outline" size="sm" onClick={() => setIsMatrixOpen(false)}>
+              Close Matrix
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );
